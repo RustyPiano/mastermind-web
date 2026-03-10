@@ -271,31 +271,39 @@
 /* ---- 猜测阶段：固定视口分屏布局 ---- */
 @media (max-width: 640px) {
   body.game-phase--guessing {
+    min-height: 100svh;
     height: 100vh;
+    height: 100svh;
     height: 100dvh;
     overflow: hidden;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   body.game-phase--guessing .main-layout {
+    width: 100%;
+    max-width: 480px;
     flex: 1;
     min-height: 0;
-    gap: 0;
+    gap: 8px;
   }
 
   /* 历史记录区：占满剩余高度，内部可滚动 */
   body.game-phase--guessing .board {
     order: 1;
     flex: 1;
+    width: 100%;
     min-height: 0;
     height: auto;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    padding: 12px 10px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-card);
+    padding: 8px 8px 6px;
     display: flex;
     flex-direction: column;
+  }
+
+  body.game-phase--guessing .board-title {
+    margin-bottom: 6px;
   }
 
   body.game-phase--guessing .rows-container {
@@ -303,33 +311,145 @@
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    gap: 6px;
+  }
+
+  body.game-phase--guessing .guess-row {
+    padding: 6px 12px;
+  }
+
+  body.game-phase--guessing .row-num {
+    width: 14px;
+  }
+
+  body.game-phase--guessing .pegs {
+    gap: 6px;
+  }
+
+  body.game-phase--guessing .pegs .ball {
+    --ball-size: 28px;
+  }
+
+  body.game-phase--guessing .feedback {
+    width: 20px;
+    gap: 3px;
+  }
+
+  body.game-phase--guessing .fb-dot {
+    width: 8px;
+    height: 8px;
   }
 
   /* 操作面板：固定在底部，不压缩 */
   body.game-phase--guessing .side-panel {
     order: 2;
     flex-shrink: 0;
-    gap: 10px;
-    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid var(--border-default);
-    background: var(--bg-body);
+    width: 100%;
+    gap: 8px;
+    padding: 0;
+    background: transparent;
   }
 
   /* 操作面板内的 card 内边距压缩 */
   body.game-phase--guessing .side-panel .card {
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+
+  body.game-phase--guessing #screenGuess {
+    gap: 8px;
+  }
+
+  body.game-phase--guessing .card-title {
+    margin-bottom: 10px;
+  }
+
+  body.game-phase--guessing .mobile-current-guess {
+    padding: 10px 10px 8px;
+    margin-bottom: 8px;
+  }
+
+  body.game-phase--guessing .mobile-current-guess__label {
+    margin-bottom: 6px;
+  }
+
+  body.game-phase--guessing .mobile-current-guess__row {
+    margin-bottom: 6px;
+  }
+
+  body.game-phase--guessing .mobile-current-guess__hint {
+    display: none;
+  }
+
+  body.game-phase--guessing .secret-row {
+    gap: 10px;
+    margin: 10px 0;
+  }
+
+  body.game-phase--guessing .palette {
+    --palette-ball-size: 32px;
+    --palette-row-width: 164px;
+    gap: 10px;
+    margin-top: 6px;
   }
 
   /* 状态提示压缩 */
   body.game-phase--guessing .status-box {
     min-height: unset;
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-size: var(--text-xs);
+    line-height: 1.4;
+  }
+
+  body.game-phase--guessing .btn-row {
+    gap: 6px;
+  }
+
+  body.game-phase--guessing .btn {
+    min-height: 40px;
+    padding: 10px 12px;
   }
 
   /* 隐藏反馈说明卡片，节省空间 */
   body.game-phase--guessing #screenGuess .card:last-child {
     display: none;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 820px) {
+  body.game-phase--guessing .main-layout {
+    gap: 6px;
+  }
+
+  body.game-phase--guessing .board {
+    padding-top: 6px;
+  }
+
+  body.game-phase--guessing .side-panel {
+    gap: 6px;
+    padding: 0;
+  }
+
+  body.game-phase--guessing .side-panel .card {
+    padding: 8px 10px;
+  }
+
+  body.game-phase--guessing .mobile-current-guess {
+    padding: 8px 8px 6px;
+  }
+
+  body.game-phase--guessing .palette {
+    --palette-ball-size: 30px;
+    --palette-row-width: 156px;
+    gap: 8px;
+  }
+
+  body.game-phase--guessing .pegs .ball {
+    --ball-size: 26px;
+  }
+
+  body.game-phase--guessing .btn {
+    min-height: 38px;
+    padding: 9px 10px;
   }
 }
 
