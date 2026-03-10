@@ -35,6 +35,7 @@ import {
   updateDailyModeEntry,
   renderStatsPanel,
   renderResultStats,
+  setStatsPanelExpanded,
   setShareButtonEnabled,
   setLegendVisibility,
   isLegendVisible,
@@ -105,6 +106,11 @@ function dismissOnboarding() {
 
 function toggleLegend() {
   setLegendVisibility(!isLegendVisible());
+}
+
+function toggleStatsPanel() {
+  const panel = document.getElementById('statsPanel');
+  setStatsPanelExpanded(Boolean(panel?.hidden));
 }
 
 function recordFinishedGame({ win, rounds }) {
@@ -443,6 +449,9 @@ function bindEvents() {
   document.getElementById('btnDismissOnboarding')
     .addEventListener('click', dismissOnboarding);
 
+  document.getElementById('btnToggleStats')
+    .addEventListener('click', toggleStatsPanel);
+
   document.getElementById('btnOpenLegend')
     .addEventListener('click', toggleLegend);
 
@@ -469,6 +478,7 @@ function init() {
   bindEvents();
   setOnboardingVisibility(!loadPreferences().firstRunDismissed);
   setLegendVisibility(false);
+  setStatsPanelExpanded(false);
   const savedSession = loadSession();
 
   if (savedSession) {

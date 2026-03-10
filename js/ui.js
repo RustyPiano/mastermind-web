@@ -353,12 +353,14 @@ export function renderStatsPanel(stats) {
     ? 0
     : Math.round(((safeStats.totals?.wins ?? 0) / gamesPlayed) * 100);
   const classicBest = safeStats.modes?.classic?.bestRounds ?? null;
+  const streak = safeStats.streaks?.currentDailyWin ?? 0;
 
   document.getElementById('statsGamesPlayed').textContent = String(gamesPlayed);
   document.getElementById('statsWinRate').textContent = `${winRate}%`;
-  document.getElementById('statsDailyStreak').textContent = String(safeStats.streaks?.currentDailyWin ?? 0);
+  document.getElementById('statsDailyStreak').textContent = String(streak);
   document.getElementById('statsBestDailyStreak').textContent = String(safeStats.streaks?.bestDailyWin ?? 0);
   document.getElementById('statsBestClassic').textContent = classicBest === null ? '-' : `${classicBest}步`;
+  document.getElementById('statsSummaryLine').textContent = `已玩 ${gamesPlayed} 局 · 经典最佳 ${classicBest === null ? '-' : `${classicBest}步`} · 每日连胜 ${streak}`;
 }
 
 export function renderResultStats(stats, result) {
@@ -366,7 +368,9 @@ export function renderResultStats(stats, result) {
   if (!target || !stats || !result) return;
 
   if (result.variant === 'daily') {
-    target.textContent = `当前每日连胜 ${stats.streaks.currentDailyWin} · 最佳 ${stats.streaks.bestDailyWin}`;
+    target.textContent = result.win
+      ? `今日挑战已完成\n当前每日连胜 ${stats.streaks.currentDailyWin} · 最佳 ${stats.streaks.bestDailyWin}`
+      : `今天这题还没拿下\n明天还有新的每日挑战`;
     return;
   }
 
@@ -374,11 +378,35 @@ export function renderResultStats(stats, result) {
     const average = getAverageRounds(stats.modes.classic);
     const averageText = average === null ? '-' : average.toFixed(1);
     const bestText = stats.modes.classic.bestRounds;
-    target.textContent = `经典最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
+    const bestSummary = bestText === null
+      ? '这是你的第一条经典记录'
+      : result.win && result.rounds === bestText
+        ? '你刷新或追平了经典最佳'
+        : result.win
+          ? `距离经典最佳还差 ${Math.max(result.rounds - bestText, 0)} 步`
+          : '这局没有刷新经典最佳';
+    target.textContent = `${bestSummary}\n经典最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
+    return;
+  }
+
+  if (result.variant === 'duplicates') {
+    target.textContent = result.win
+      ? '这局使用的是允许重复色的规则\n如果觉得经典模式太简单，可以继续挑战它'
+      : '重复色模式会让排除法更难\n再来一局会更容易建立感觉';
     return;
   }
 
   target.textContent = `累计对局 ${stats.totals.gamesPlayed} 场`;
+}
+
+export function setStatsPanelExpanded(expanded) {
+  const panel = document.getElementById('statsPanel');
+  const button = document.getElementById('btnToggleStats');
+  if (!panel || !button) return;
+
+  panel.hidden = !expanded;
+  button.textContent = expanded ? '收起详细统计' : '查看详细统计';
+  button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 }
 
 /* ---- Screen Switching ---- */

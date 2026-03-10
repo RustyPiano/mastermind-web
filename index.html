@@ -43,7 +43,7 @@
       <div class="screen active" id="screenMode">
         <div class="card text-center">
           <div class="card-title">选择模式</div>
-          <p class="text-hint">经典模式适合练手；每日挑战会记录你当天是否通关和每日连胜。</p>
+          <p class="text-hint">先选一种玩法开始。想每天回来玩，就从每日挑战开始。</p>
           <div class="onboarding-card" id="onboardingCard" hidden>
             <div class="onboarding-card__head">
               <strong>第一次玩先看这里</strong>
@@ -55,7 +55,11 @@
               <span>🟠 颜色正确但位置错误</span>
             </div>
           </div>
-          <div class="stats-panel" id="statsPanel" aria-live="polite">
+          <div class="stats-summary" aria-live="polite">
+            <div class="stats-summary__line" id="statsSummaryLine">已玩 0 局 · 经典最佳 - · 每日连胜 0</div>
+            <button class="stats-summary__toggle" id="btnToggleStats" type="button" aria-expanded="false" aria-controls="statsPanel">查看详细统计</button>
+          </div>
+          <div class="stats-panel" id="statsPanel" hidden>
             <div class="stats-panel__item">
               <span class="stats-panel__label">总场次</span>
               <strong class="stats-panel__value" id="statsGamesPlayed">0</strong>
@@ -81,17 +85,17 @@
             <div class="mode-option mode-option--daily">
               <span class="mode-option__tag">今日目标</span>
               <button class="btn btn-primary" id="btnModeDaily" type="button">每日挑战</button>
-              <p class="mode-option__meta" id="dailyModeMeta">今日题目加载中</p>
+              <p class="mode-option__meta" id="dailyModeMeta">每天一题，通关会计入每日连胜。</p>
             </div>
             <div class="mode-option mode-option--classic">
               <span class="mode-option__tag">练手首选</span>
               <button class="btn btn-secondary" id="btnModeSingle" type="button">单人经典</button>
-              <p class="mode-option__meta">随时开一局，适合练习推理节奏和试错。</p>
+              <p class="mode-option__meta">标准规则，适合熟悉节奏和刷新最佳步数。</p>
             </div>
             <div class="mode-option mode-option--variant">
               <span class="mode-option__tag">进阶变体</span>
               <button class="btn btn-secondary" id="btnModeDuplicates" type="button">重复色模式</button>
-              <p class="mode-option__meta">允许重复颜色，推理方式会明显不同。</p>
+              <p class="mode-option__meta">密码和猜测都允许重复色，推理难度更高。</p>
             </div>
             <div class="mode-option mode-option--dual">
               <span class="mode-option__tag">双人对战</span>
