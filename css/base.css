@@ -83,16 +83,16 @@ body {
 
 @media (max-width: 640px) {
   body {
-    padding: 16px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: 24px 16px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   .header {
-    margin-bottom: 12px;
-    padding-top: 0;
+    margin-bottom: 18px;
+    padding-top: 6px;
   }
 
   .subtitle {
-    margin-top: 2px;
+    margin-top: 4px;
   }
 }
