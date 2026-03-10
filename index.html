@@ -44,9 +44,39 @@
         <div class="card text-center">
           <div class="card-title">选择模式</div>
           <p class="text-hint">选择单人或双人开始游戏</p>
+          <div class="stats-panel" id="statsPanel" aria-live="polite">
+            <div class="stats-panel__item">
+              <span class="stats-panel__label">总场次</span>
+              <strong class="stats-panel__value" id="statsGamesPlayed">0</strong>
+            </div>
+            <div class="stats-panel__item">
+              <span class="stats-panel__label">胜率</span>
+              <strong class="stats-panel__value" id="statsWinRate">0%</strong>
+            </div>
+            <div class="stats-panel__item">
+              <span class="stats-panel__label">每日连胜</span>
+              <strong class="stats-panel__value" id="statsDailyStreak">0</strong>
+            </div>
+            <div class="stats-panel__item">
+              <span class="stats-panel__label">最佳每日连胜</span>
+              <strong class="stats-panel__value" id="statsBestDailyStreak">0</strong>
+            </div>
+            <div class="stats-panel__item">
+              <span class="stats-panel__label">经典最佳</span>
+              <strong class="stats-panel__value" id="statsBestClassic">-</strong>
+            </div>
+          </div>
           <div class="mode-actions">
-            <button class="btn btn-primary" id="btnModeSingle" type="button">单人模式</button>
-            <button class="btn btn-secondary" id="btnModeDual" type="button">双人模式</button>
+            <div class="mode-option mode-option--primary">
+              <button class="btn btn-primary" id="btnModeSingle" type="button">单人经典</button>
+            </div>
+            <div class="mode-option">
+              <button class="btn btn-secondary" id="btnModeDaily" type="button">每日挑战</button>
+              <p class="mode-option__meta" id="dailyModeMeta">今日题目加载中</p>
+            </div>
+            <div class="mode-option">
+              <button class="btn btn-secondary" id="btnModeDual" type="button">双人对战</button>
+            </div>
           </div>
         </div>
       </div>
@@ -63,6 +93,7 @@
           <div class="palette" id="setupPalette"></div>
         </div>
         <button class="btn btn-primary" id="btnConfirmSecret" type="button" disabled>确认密码 →</button>
+        <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
       </div>
 
       <!-- Screen 2: Transition (Device Handoff) -->
@@ -76,6 +107,7 @@
           </p>
         </div>
         <button class="btn btn-primary" id="btnStartGuessing" type="button">玩家二准备好了 →</button>
+        <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
       </div>
 
       <!-- Screen 3: Guessing -->
@@ -97,6 +129,8 @@
           <button class="btn btn-secondary" id="btnClear" type="button">清除</button>
           <button class="btn btn-primary" id="btnSubmit" type="button" disabled>提交猜测</button>
         </div>
+
+        <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
 
         <div class="card">
           <div class="card-title">反馈说明</div>
@@ -126,8 +160,10 @@
       <div class="overlay-emoji" id="overlayEmoji"></div>
       <div class="overlay-title" id="overlayTitle"></div>
       <div class="overlay-sub" id="overlaySub"></div>
+      <div class="overlay-stats" id="overlayStats"></div>
       <div class="answer-row-final" id="answerFinal"></div>
       <div class="overlay-actions">
+        <button class="btn btn-secondary" id="btnShareResult" type="button">分享结果</button>
         <button class="btn btn-secondary" id="btnBackHome" type="button">回到主页</button>
         <button class="btn btn-primary" id="btnPlayAgain" type="button">再来一局</button>
       </div>

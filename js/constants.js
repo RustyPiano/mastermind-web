@@ -10,3 +10,4 @@ export const COLORS = [
 
 export const MAX_GUESSES = 10;
 export const CODE_LENGTH = 4;
+export const ALLOW_DUPLICATE_COLORS = false;

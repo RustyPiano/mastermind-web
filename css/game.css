@@ -82,12 +82,12 @@
   transition: all var(--transition-base);
 }
 
-.fb-dot.green {
+.fb-dot.exact {
   background: var(--color-correct);
   border-color: var(--color-correct);
 }
 
-.fb-dot.white {
+.fb-dot.misplaced {
   background: var(--color-misplaced);
   border-color: var(--color-misplaced);
 }

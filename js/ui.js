@@ -1,5 +1,7 @@
 import { COLORS, MAX_GUESSES, CODE_LENGTH } from './constants.js';
 import { GameState } from './state.js';
+import { FEEDBACK } from './engine.js';
+import { getAverageRounds } from './stats.js';
 
 /* ---- Helpers ---- */
 
@@ -213,6 +215,25 @@ export function updateCurrentGuessDisplay(onClickSlot) {
   buildMobileGuessRow(onClickSlot);
 }
 
+export function restoreBoardHistory(onClickSlot) {
+  GameState.guessHistory.forEach((entry, round) => {
+    entry.guess.forEach((colorId, index) => {
+      const old = document.getElementById(`g${round}-${index}`);
+      if (!old) return;
+
+      const ball = makeBall(colorId, '--ball-sm');
+      ball.id = `g${round}-${index}`;
+      old.replaceWith(ball);
+    });
+
+    renderFeedback(round, entry.feedback);
+    freezeRow(round);
+  });
+
+  updateCurrentGuessDisplay(onClickSlot);
+  highlightActiveRow();
+}
+
 /* ---- Guess Info ---- */
 
 export function updateSubmitButton() {
@@ -233,15 +254,19 @@ export function updateStatus(msg) {
 
 export function renderFeedback(round, feedback) {
   const sorted = [...feedback].sort((a, b) => {
-    const order = { green: 0, white: 1, none: 2 };
+    const order = {
+      [FEEDBACK.EXACT]: 0,
+      [FEEDBACK.MISPLACED]: 1,
+      [FEEDBACK.NONE]: 2,
+    };
     return order[a] - order[b];
   });
 
   sorted.forEach((f, i) => {
     const dot = document.getElementById(`fb${round}-${i}`);
     if (!dot) return;
-    if (f === 'green') dot.classList.add('green');
-    else if (f === 'white') dot.classList.add('white');
+    if (f === FEEDBACK.EXACT) dot.classList.add('exact');
+    else if (f === FEEDBACK.MISPLACED) dot.classList.add('misplaced');
   });
 }
 
@@ -250,12 +275,18 @@ export function renderFeedback(round, feedback) {
 export function showResult(win, rounds) {
   const isSingleMode = GameState.mode === 'single';
   const winnerText = isSingleMode ? '你' : '玩家二';
+  const resultLabel = GameState.variant === 'daily'
+    ? `每日挑战 ${GameState.challengeKey}`
+    : GameState.mode === 'single'
+      ? '单人经典'
+      : '双人对战';
 
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
   document.getElementById('overlaySub').innerHTML = win
-    ? `${winnerText}用了 <strong>${rounds}</strong> 次破解了密码！正确答案：`
-    : `${winnerText}在${MAX_GUESSES}次内未能破解。正确答案：`;
+    ? `${resultLabel}<br>${winnerText}用了 <strong>${rounds}</strong> 次破解了密码！正确答案：`
+    : `${resultLabel}<br>${winnerText}在${MAX_GUESSES}次内未能破解。正确答案：`;
+  document.getElementById('overlayStats').textContent = '';
 
   const finalRow = document.getElementById('answerFinal');
   finalRow.innerHTML = '';
@@ -271,18 +302,84 @@ export function hideOverlay() {
   document.getElementById('overlay').classList.remove('show');
 }
 
-export function applyModeLabels(mode) {
+export function setShareButtonEnabled(enabled) {
+  const button = document.getElementById('btnShareResult');
+  if (!button) return;
+
+  button.disabled = !enabled;
+}
+
+export function applyModeLabels(mode, variant = 'classic', challengeKey = null) {
   const setupTitle = document.getElementById('setupTitle');
   const guessTitle = document.getElementById('guessTitle');
   if (!setupTitle || !guessTitle) return;
 
-  if (mode === 'single') {
+  if (mode === 'single' && variant === 'daily') {
+    setupTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
+    guessTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
+  } else if (mode === 'single') {
     setupTitle.textContent = '单人模式 · 电脑已生成密码';
     guessTitle.textContent = '单人模式 · 你来猜测';
   } else {
     setupTitle.textContent = '玩家一 · 设置密码';
     guessTitle.textContent = '玩家二 · 猜测颜色';
   }
+}
+
+export function updateDailyModeEntry({ challengeKey, isCompleted, hasActiveSession }) {
+  const button = document.getElementById('btnModeDaily');
+  const meta = document.getElementById('dailyModeMeta');
+  if (!button || !meta) return;
+
+  if (hasActiveSession) {
+    button.textContent = '继续每日挑战';
+    meta.textContent = `继续 ${challengeKey} 的进度`;
+    return;
+  }
+
+  button.textContent = '每日挑战';
+  meta.textContent = isCompleted
+    ? `${challengeKey} 已完成 ✓`
+    : `${challengeKey} 今日题目`;
+}
+
+export function renderStatsPanel(stats) {
+  const safeStats = stats ?? {
+    totals: { gamesPlayed: 0, wins: 0 },
+    streaks: { currentDailyWin: 0, bestDailyWin: 0 },
+    modes: { classic: { bestRounds: null } },
+  };
+  const gamesPlayed = safeStats.totals?.gamesPlayed ?? 0;
+  const winRate = gamesPlayed === 0
+    ? 0
+    : Math.round(((safeStats.totals?.wins ?? 0) / gamesPlayed) * 100);
+  const classicBest = safeStats.modes?.classic?.bestRounds ?? null;
+
+  document.getElementById('statsGamesPlayed').textContent = String(gamesPlayed);
+  document.getElementById('statsWinRate').textContent = `${winRate}%`;
+  document.getElementById('statsDailyStreak').textContent = String(safeStats.streaks?.currentDailyWin ?? 0);
+  document.getElementById('statsBestDailyStreak').textContent = String(safeStats.streaks?.bestDailyWin ?? 0);
+  document.getElementById('statsBestClassic').textContent = classicBest === null ? '-' : `${classicBest}步`;
+}
+
+export function renderResultStats(stats, result) {
+  const target = document.getElementById('overlayStats');
+  if (!target || !stats || !result) return;
+
+  if (result.variant === 'daily') {
+    target.textContent = `当前每日连胜 ${stats.streaks.currentDailyWin} · 最佳 ${stats.streaks.bestDailyWin}`;
+    return;
+  }
+
+  if (result.variant === 'classic' && result.mode === 'single') {
+    const average = getAverageRounds(stats.modes.classic);
+    const averageText = average === null ? '-' : average.toFixed(1);
+    const bestText = stats.modes.classic.bestRounds;
+    target.textContent = `经典最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
+    return;
+  }
+
+  target.textContent = `累计对局 ${stats.totals.gamesPlayed} 场`;
 }
 
 /* ---- Screen Switching ---- */

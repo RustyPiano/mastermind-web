@@ -1,4 +1,5 @@
-import { CODE_LENGTH } from './constants.js';
+import { CODE_LENGTH, ALLOW_DUPLICATE_COLORS } from './constants.js';
+import { generateSecret } from './engine.js';
 
 function createEmptySlots() {
   return Array(CODE_LENGTH).fill(null);
@@ -6,24 +7,48 @@ function createEmptySlots() {
 
 export const GameState = {
   mode: 'dual',
+  variant: 'classic',
+  startedAt: null,
+  challengeKey: null,
   secretCode: createEmptySlots(),
   currentGuess: createEmptySlots(),
   guessHistory: [],
 
   setupActiveSlot: 0,
   guessActiveSlot: 0,
+  screenId: 'screenMode',
+  status: 'idle',
 
   setMode(mode) {
     this.mode = mode;
   },
 
+  setVariant(variant) {
+    this.variant = variant;
+  },
+
+  setStartedAt(timestamp = new Date().toISOString()) {
+    this.startedAt = timestamp;
+  },
+
+  setChallengeKey(challengeKey) {
+    this.challengeKey = challengeKey;
+  },
+
+  setScreen(screenId) {
+    this.screenId = screenId;
+  },
+
+  setStatus(status) {
+    this.status = status;
+  },
+
   generateRandomSecret(colors) {
-    const pool = [...colors];
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    this.secretCode = pool.slice(0, CODE_LENGTH);
+    this.secretCode = generateSecret({
+      colors,
+      codeLength: CODE_LENGTH,
+      allowDuplicates: ALLOW_DUPLICATE_COLORS,
+    });
     this.setupActiveSlot = 0;
   },
 
@@ -119,14 +144,38 @@ export const GameState = {
     });
   },
 
+  restore(data) {
+    Object.assign(this, {
+      mode: data.mode,
+      variant: data.variant,
+      startedAt: data.startedAt,
+      challengeKey: data.challengeKey ?? null,
+      secretCode: [...data.secretCode],
+      currentGuess: [...data.currentGuess],
+      guessHistory: data.guessHistory.map((entry) => ({
+        guess: [...entry.guess],
+        feedback: [...entry.feedback],
+      })),
+      setupActiveSlot: data.setupActiveSlot,
+      guessActiveSlot: data.guessActiveSlot,
+      screenId: data.screenId,
+      status: data.status,
+    });
+  },
+
   /* ---- Reset ---- */
 
   reset() {
     this.mode = 'dual';
+    this.variant = 'classic';
+    this.startedAt = null;
+    this.challengeKey = null;
     this.secretCode = createEmptySlots();
     this.currentGuess = createEmptySlots();
     this.guessHistory = [];
     this.setupActiveSlot = 0;
     this.guessActiveSlot = 0;
+    this.screenId = 'screenMode';
+    this.status = 'idle';
   },
 };

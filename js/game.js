@@ -1,5 +1,10 @@
 import { COLORS, MAX_GUESSES, CODE_LENGTH } from './constants.js';
 import { GameState } from './state.js';
+import { calcFeedback, FEEDBACK, isWinningFeedback } from './engine.js';
+import { dateToChallengeKey, generateDailySecret, isDailySessionForKey } from './daily.js';
+import { hasCompletedDaily, recordGameResult } from './stats.js';
+import { clearSession, createSessionSnapshot, loadSession, loadStats, saveSession, saveStats } from './storage.js';
+import { shareResult } from './share.js';
 import {
   buildBoard,
   buildSecretRow,
@@ -16,37 +21,126 @@ import {
   hideOverlay,
   applyModeLabels,
   showScreen,
+  restoreBoardHistory,
+  updateDailyModeEntry,
+  renderStatsPanel,
+  renderResultStats,
+  setShareButtonEnabled,
 } from './ui.js';
 
-/* ============================================
-   Core Algorithm
-   ============================================ */
+let saveScheduled = false;
+const challengeTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+let latestResult = null;
 
-function calcFeedback(guess, secret) {
-  const result = Array(CODE_LENGTH).fill('none');
-  const sl = [...secret];
-  const gl = [...guess];
+function setCurrentScreen(screenId) {
+  GameState.setScreen(screenId);
+  showScreen(screenId);
+}
 
-  // Pass 1: exact matches
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    if (guess[i] === secret[i]) {
-      result[i] = 'green';
-      sl[i] = null;
-      gl[i] = null;
-    }
+function scheduleSave() {
+  if (saveScheduled) return;
+  saveScheduled = true;
+
+  queueMicrotask(() => {
+    saveScheduled = false;
+    if (GameState.status !== 'in_progress') return;
+    saveSession(createSessionSnapshot(GameState));
+  });
+}
+
+function getGuessStatusMessage() {
+  const prefix = GameState.variant === 'daily'
+    ? `每日挑战 ${GameState.challengeKey} · `
+    : '';
+
+  if (GameState.isGuessComplete()) {
+    return `${prefix}密码选好了，点击提交！`;
   }
 
-  // Pass 2: color matches (wrong position)
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    if (gl[i] === null) continue;
-    const j = sl.indexOf(gl[i]);
-    if (j !== -1) {
-      result[i] = 'white';
-      sl[j] = null;
-    }
+  return `${prefix}请选择4个颜色提交猜测`;
+}
+
+function getTodayChallengeKey() {
+  return dateToChallengeKey(new Date(), challengeTimeZone);
+}
+
+function refreshModeSelectionMeta() {
+  const challengeKey = getTodayChallengeKey();
+  const stats = loadStats();
+  const savedSession = loadSession();
+
+  updateDailyModeEntry({
+    challengeKey,
+    isCompleted: hasCompletedDaily(stats, challengeKey),
+    hasActiveSession: isDailySessionForKey(savedSession, challengeKey),
+  });
+  renderStatsPanel(stats);
+}
+
+function recordFinishedGame({ win, rounds }) {
+  const nextStats = recordGameResult(loadStats(), {
+    mode: GameState.mode,
+    variant: GameState.variant,
+    challengeKey: GameState.challengeKey,
+    rounds,
+    win,
+    finishedAt: new Date().toISOString(),
+  });
+
+  saveStats(nextStats);
+  latestResult = {
+    mode: GameState.mode,
+    variant: GameState.variant,
+    challengeKey: GameState.challengeKey,
+    rounds,
+    win,
+    history: GameState.guessHistory.map((entry) => ({
+      feedback: [...entry.feedback],
+    })),
+    maxGuesses: MAX_GUESSES,
+  };
+}
+
+async function handleShareResult() {
+  if (!latestResult) {
+    updateStatus('当前没有可分享的结果');
+    return;
   }
 
-  return result;
+  try {
+    const result = await shareResult(latestResult);
+    updateStatus(result.method === 'share' ? '分享成功' : '已复制结果，可直接粘贴分享');
+  } catch {
+    updateStatus('当前浏览器不支持直接分享，请手动复制结果');
+  }
+}
+
+function hydrateRecoveredSession() {
+  applyModeLabels(GameState.mode, GameState.variant, GameState.challengeKey);
+  buildBoard();
+  restoreBoardHistory(handleGuessSlotClick);
+
+  if (GameState.screenId === 'screenSetup') {
+    refreshSetupUI();
+    setCurrentScreen('screenSetup');
+    return;
+  }
+
+  if (GameState.screenId === 'screenTransition') {
+    refreshSetupUI();
+    setCurrentScreen('screenTransition');
+    return;
+  }
+
+  if (GameState.screenId === 'screenGuess') {
+    refreshGuessUI();
+    updateCurrentGuessDisplay(handleGuessSlotClick);
+    updateStatus(getGuessStatusMessage());
+    setCurrentScreen('screenGuess');
+    return;
+  }
+
+  setCurrentScreen('screenMode');
 }
 
 /* ============================================
@@ -59,11 +153,13 @@ function handleSecretSlotClick(slotIndex) {
   } else {
     GameState.setSetupFocus(slotIndex);
   }
+  scheduleSave();
   refreshSetupUI();
 }
 
 function handleSetupColorClick(colorId) {
   GameState.setSecretColor(colorId);
+  scheduleSave();
   refreshSetupUI();
 }
 
@@ -75,31 +171,62 @@ function refreshSetupUI() {
 
 function confirmSecret() {
   if (!GameState.isSecretComplete()) return;
-  showScreen('screenTransition');
+  setCurrentScreen('screenTransition');
+  scheduleSave();
 }
 
 function startGuessing() {
-  showScreen('screenGuess');
+  setCurrentScreen('screenGuess');
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
-  updateStatus('请选择4个颜色提交猜测');
+  updateStatus(getGuessStatusMessage());
+  scheduleSave();
 }
 
 function startSingleMode() {
   GameState.reset();
   GameState.setMode('single');
+  GameState.setVariant('classic');
+  GameState.setStartedAt();
+  GameState.setStatus('in_progress');
   GameState.generateRandomSecret(COLORS.map(c => c.id));
-  applyModeLabels('single');
+  applyModeLabels('single', 'classic');
   buildBoard();
+  scheduleSave();
+  startGuessing();
+}
+
+function startDailyMode() {
+  const challengeKey = getTodayChallengeKey();
+
+  GameState.reset();
+  GameState.setMode('single');
+  GameState.setVariant('daily');
+  GameState.setStartedAt();
+  GameState.setChallengeKey(challengeKey);
+  GameState.setStatus('in_progress');
+  GameState.secretCode = generateDailySecret({
+    dateKey: challengeKey,
+    colors: COLORS.map((color) => color.id),
+    codeLength: CODE_LENGTH,
+    allowDuplicates: false,
+  });
+  applyModeLabels('single', 'daily', challengeKey);
+  buildBoard();
+  scheduleSave();
   startGuessing();
 }
 
 function startDualMode() {
   GameState.reset();
   GameState.setMode('dual');
-  applyModeLabels('dual');
+  GameState.setVariant('classic');
+  GameState.setStartedAt();
+  GameState.setStatus('in_progress');
+  applyModeLabels('dual', 'classic');
   buildBoard();
-  showScreen('screenSetup');
+  setCurrentScreen('screenSetup');
+  scheduleSave();
   refreshSetupUI();
 }
 
@@ -113,20 +240,18 @@ function handleGuessSlotClick(slotIndex) {
   } else {
     GameState.setGuessFocus(slotIndex);
   }
+  scheduleSave();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
 }
 
 function handleGuessColorClick(colorId) {
   GameState.setGuessColor(colorId);
+  scheduleSave();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
 
-  if (GameState.isGuessComplete()) {
-    updateStatus('密码选好了，点击提交！');
-  } else {
-    updateStatus('请选择4个颜色提交猜测');
-  }
+  updateStatus(getGuessStatusMessage());
 }
 
 function refreshGuessUI() {
@@ -136,9 +261,10 @@ function refreshGuessUI() {
 
 function clearCurrentGuess() {
   GameState.clearGuess();
+  scheduleSave();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
-  updateStatus('请选择4个颜色提交猜测');
+  updateStatus(getGuessStatusMessage());
 }
 
 function submitGuess() {
@@ -150,26 +276,44 @@ function submitGuess() {
   freezeRow(r); // Lock current row
 
   GameState.pushGuess(feedback);
+  scheduleSave();
   renderFeedback(r, feedback);
 
-  const greens = feedback.filter(f => f === 'green').length;
-  const whites = feedback.filter(f => f === 'white').length;
+  const exactCount = feedback.filter(f => f === FEEDBACK.EXACT).length;
+  const misplacedCount = feedback.filter(f => f === FEEDBACK.MISPLACED).length;
 
-  if (greens === CODE_LENGTH) {
-    setTimeout(() => showResult(true, r + 1), 400);
+  if (isWinningFeedback(feedback, CODE_LENGTH)) {
+    GameState.setStatus('won');
+    recordFinishedGame({ win: true, rounds: r + 1 });
+    clearSession();
+    refreshModeSelectionMeta();
+    setTimeout(() => {
+      showResult(true, r + 1);
+      renderResultStats(loadStats(), latestResult);
+      setShareButtonEnabled(true);
+    }, 400);
     return;
   }
 
   if (r + 1 >= MAX_GUESSES) {
-    setTimeout(() => showResult(false), 400);
+    GameState.setStatus('lost');
+    recordFinishedGame({ win: false, rounds: r + 1 });
+    clearSession();
+    refreshModeSelectionMeta();
+    setTimeout(() => {
+      showResult(false);
+      renderResultStats(loadStats(), latestResult);
+      setShareButtonEnabled(true);
+    }, 400);
     return;
   }
 
   GameState.clearGuess();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick); // Initialize new row
-  updateStatus(`第${r + 1}轮：🟢 ${greens}个正确 🟠 ${whites}个位置错 — 继续！`);
+  updateStatus(`第${r + 1}轮：🟢 ${exactCount}个正确 🟠 ${misplacedCount}个位置错 — 继续！`);
   highlightActiveRow();
+  scheduleSave();
 }
 
 /* ============================================
@@ -178,17 +322,25 @@ function submitGuess() {
 
 function resetGame() {
   GameState.reset();
-  applyModeLabels('dual');
+  latestResult = null;
+  clearSession();
+  applyModeLabels('dual', 'classic');
   hideOverlay();
-  showScreen('screenMode');
+  setShareButtonEnabled(false);
+  setCurrentScreen('screenMode');
   refreshSetupUI();
   buildBoard();
+  refreshModeSelectionMeta();
 }
 
 function replayGame() {
-  const mode = GameState.mode;
+  const { mode, variant } = GameState;
+  latestResult = null;
   hideOverlay();
-  if (mode === 'single') {
+  setShareButtonEnabled(false);
+  if (mode === 'single' && variant === 'daily') {
+    startDailyMode();
+  } else if (mode === 'single') {
     startSingleMode();
   } else {
     startDualMode();
@@ -202,6 +354,9 @@ function replayGame() {
 function bindEvents() {
   document.getElementById('btnModeSingle')
     .addEventListener('click', startSingleMode);
+
+  document.getElementById('btnModeDaily')
+    .addEventListener('click', startDailyMode);
 
   document.getElementById('btnModeDual')
     .addEventListener('click', startDualMode);
@@ -221,6 +376,16 @@ function bindEvents() {
   document.getElementById('btnBackHome')
     .addEventListener('click', resetGame);
 
+  document.querySelectorAll('.btn-exit-home')
+    .forEach((button) => {
+      button.addEventListener('click', resetGame);
+    });
+
+  document.getElementById('btnShareResult')
+    .addEventListener('click', () => {
+      void handleShareResult();
+    });
+
   document.getElementById('btnPlayAgain')
     .addEventListener('click', replayGame);
 }
@@ -231,10 +396,22 @@ function bindEvents() {
 
 function init() {
   bindEvents();
-  applyModeLabels('dual');
+  const savedSession = loadSession();
+
+  if (savedSession) {
+    GameState.restore(savedSession);
+    hydrateRecoveredSession();
+    refreshModeSelectionMeta();
+    setShareButtonEnabled(false);
+    return;
+  }
+
+  applyModeLabels('dual', 'classic');
   buildBoard();
   refreshSetupUI();
-  showScreen('screenMode');
+  setCurrentScreen('screenMode');
+  refreshModeSelectionMeta();
+  setShareButtonEnabled(false);
 }
 
 init();
