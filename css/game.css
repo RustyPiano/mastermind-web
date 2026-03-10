@@ -225,20 +225,17 @@
     gap: 16px;
   }
 
+  /* 默认：side-panel 在上，board 在下，正常堆叠可滚动 */
   .board {
     width: 100%;
-    max-width: 380px;
+    max-width: 480px;
     order: 2;
-    height: min(48vh, 420px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     padding: 14px 10px 12px;
   }
 
   .side-panel {
     width: 100%;
-    max-width: 380px;
+    max-width: 480px;
     min-width: unset;
     order: 1;
     gap: 14px;
@@ -249,10 +246,6 @@
   }
 
   .rows-container {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     padding-top: 0;
   }
 
@@ -265,8 +258,74 @@
   }
 
   .guess-row {
-    gap: var(--space-sm);
-    padding: 8px;
+    width: 100%;
+    justify-content: space-between;
+    padding: 8px 16px;
+  }
+}
+
+/* ---- 猜测阶段：固定视口分屏布局 ---- */
+@media (max-width: 640px) {
+  body.game-phase--guessing {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body.game-phase--guessing .main-layout {
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+
+  /* 历史记录区：占满剩余高度，内部可滚动 */
+  body.game-phase--guessing .board {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    padding: 12px 10px 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.game-phase--guessing .rows-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* 操作面板：固定在底部，不压缩 */
+  body.game-phase--guessing .side-panel {
+    order: 2;
+    flex-shrink: 0;
+    gap: 10px;
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border-default);
+    background: var(--bg-body);
+  }
+
+  /* 操作面板内的 card 内边距压缩 */
+  body.game-phase--guessing .side-panel .card {
+    padding: 12px 14px;
+  }
+
+  /* 状态提示压缩 */
+  body.game-phase--guessing .status-box {
+    min-height: unset;
+    padding: 8px 12px;
+    font-size: var(--text-xs);
+  }
+
+  /* 隐藏反馈说明卡片，节省空间 */
+  body.game-phase--guessing #screenGuess .card:last-child {
+    display: none;
   }
 }
 
@@ -281,7 +340,6 @@
   }
 
   .guess-row {
-    gap: 6px;
-    padding: 6px;
+    padding: 6px 12px;
   }
 }

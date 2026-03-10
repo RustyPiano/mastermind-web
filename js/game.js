@@ -8,7 +8,6 @@ import {
   highlightActiveRow,
   freezeRow,
   updateCurrentGuessDisplay,
-  updateSelectedCount,
   updateSubmitButton,
   updateConfirmButton,
   updateStatus,
@@ -132,7 +131,6 @@ function handleGuessColorClick(colorId) {
 
 function refreshGuessUI() {
   buildGuessPalette(handleGuessColorClick);
-  updateSelectedCount();
   updateSubmitButton();
 }
 

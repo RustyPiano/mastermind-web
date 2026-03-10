@@ -85,6 +85,9 @@ export function highlightActiveRow() {
     arrow.className = 'active-arrow';
     arrow.textContent = '\u25B6';
     activeRow.appendChild(arrow);
+
+    // 提交后自动将新的活跃行滚动到可视区域
+    activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 }
 
@@ -212,11 +215,6 @@ export function updateCurrentGuessDisplay(onClickSlot) {
 
 /* ---- Guess Info ---- */
 
-export function updateSelectedCount() {
-  const count = GameState.guessFilledCount();
-  document.getElementById('selectedCount').textContent = count;
-}
-
 export function updateSubmitButton() {
   document.getElementById('btnSubmit').disabled = !GameState.isGuessComplete();
 }
@@ -293,7 +291,10 @@ export function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
 
-  if (window.innerWidth <= 640) {
+  // 仅猜测阶段启用固定分屏布局
+  document.body.classList.toggle('game-phase--guessing', screenId === 'screenGuess');
+
+  if (window.innerWidth <= 640 && screenId !== 'screenGuess') {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
