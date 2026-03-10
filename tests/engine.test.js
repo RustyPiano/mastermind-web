@@ -27,6 +27,11 @@ describe('calcFeedback', () => {
       .toEqual([FEEDBACK.EXACT, FEEDBACK.NONE, FEEDBACK.NONE, FEEDBACK.NONE]);
   });
 
+  it('supports 5-slot boards', () => {
+    expect(calcFeedback(['c1', 'c2', 'c3', 'c4', 'c5'], ['c1', 'c3', 'c2', 'c5', 'c4']))
+      .toEqual([FEEDBACK.EXACT, FEEDBACK.MISPLACED, FEEDBACK.MISPLACED, FEEDBACK.MISPLACED, FEEDBACK.MISPLACED]);
+  });
+
   it('throws on length mismatch', () => {
     expect(() => calcFeedback(['c1', 'c2'], ['c1', 'c2', 'c3', 'c4']))
       .toThrow();
@@ -34,7 +39,7 @@ describe('calcFeedback', () => {
 });
 
 describe('generateSecret', () => {
-  const colors = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+  const colors = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'];
 
   it('returns the requested code length', () => {
     const secret = generateSecret({ colors, codeLength: 4, allowDuplicates: false });
@@ -50,7 +55,7 @@ describe('generateSecret', () => {
     let index = 0;
     const rng = () => [0, 0, 0.5, 0.5][index++] ?? 0;
     const secret = generateSecret({ colors, codeLength: 4, allowDuplicates: true, rng });
-    expect(secret).toEqual(['c1', 'c1', 'c4', 'c4']);
+    expect(secret).toEqual(['c1', 'c1', 'c5', 'c5']);
   });
 
   it('produces deterministic output with a fixed rng', () => {
@@ -58,6 +63,20 @@ describe('generateSecret', () => {
     const first = generateSecret({ colors, codeLength: 4, allowDuplicates: false, rng });
     const second = generateSecret({ colors, codeLength: 4, allowDuplicates: false, rng: () => 0.1 });
     expect(first).toEqual(second);
+  });
+
+  it('supports 5-slot unique secrets from a larger palette', () => {
+    const secret = generateSecret({ colors, codeLength: 5, allowDuplicates: false, rng: () => 0.25 });
+    expect(secret).toHaveLength(5);
+    expect(new Set(secret).size).toBe(5);
+  });
+
+  it('throws when unique colors are insufficient', () => {
+    expect(() => generateSecret({
+      colors: ['c1', 'c2', 'c3', 'c4'],
+      codeLength: 5,
+      allowDuplicates: false,
+    })).toThrow('Not enough unique colors');
   });
 });
 
@@ -74,5 +93,12 @@ describe('isWinningFeedback', () => {
       [FEEDBACK.EXACT, FEEDBACK.MISPLACED, FEEDBACK.EXACT, FEEDBACK.EXACT],
       4,
     )).toBe(false);
+  });
+
+  it('supports 5-slot win detection', () => {
+    expect(isWinningFeedback(
+      [FEEDBACK.EXACT, FEEDBACK.EXACT, FEEDBACK.EXACT, FEEDBACK.EXACT, FEEDBACK.EXACT],
+      5,
+    )).toBe(true);
   });
 });

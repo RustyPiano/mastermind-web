@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="密码机 - 在线单人/双人猜色解码游戏，灵感来自 GiiKER 计客超级密码机。从7种颜色中设置4位密码，挑战你的逻辑推理能力！">
+  <meta name="description" content="密码机 - 在线单人/双人猜色解码游戏，灵感来自 GiiKER 计客超级密码机。支持每日挑战、单人闯关、重复色模式与双人对战。">
   <meta name="keywords" content="密码机,Mastermind,猜色游戏,GiiKER,计客,解谜游戏,逻辑推理">
   <meta name="author" content="密码机">
   <meta name="theme-color" content="#121212">
@@ -43,13 +43,13 @@
       <div class="screen active" id="screenMode">
         <div class="card text-center">
           <div class="card-title">选择模式</div>
-          <p class="text-hint">猜出 4 色密码的推理游戏。想每天回来玩，从每日挑战开始。</p>
+          <p class="text-hint">猜出颜色密码的推理游戏。想每天回来玩，从每日挑战开始。</p>
           <div class="onboarding-card" id="onboardingCard" hidden>
             <div class="onboarding-card__head">
               <strong>第一次玩先看这里</strong>
               <button class="onboarding-card__close" id="btnDismissOnboarding" type="button" aria-label="关闭新手说明">×</button>
             </div>
-            <p class="onboarding-card__copy">目标是在 10 次内猜中 4 个颜色组成的密码。经典和每日模式不允许重复色，重复色模式则允许。</p>
+            <p class="onboarding-card__copy">目标是在限定次数内猜中颜色组成的密码。单人闯关和每日挑战不允许重复色，重复色模式则允许。</p>
             <div class="onboarding-card__legend">
               <span>🟢 颜色和位置都正确</span>
               <span>🟠 颜色正确但位置错误</span>
@@ -88,9 +88,9 @@
               <p class="mode-option__meta" id="dailyModeMeta">每天一题，通关会计入每日连胜。</p>
             </div>
             <div class="mode-option mode-option--classic">
-              <span class="mode-option__tag">练手首选</span>
-              <button class="btn btn-secondary" id="btnModeSingle" type="button">单人经典</button>
-              <p class="mode-option__meta">标准规则，适合熟悉节奏和刷新最佳步数。</p>
+              <span class="mode-option__tag">难度闯关</span>
+              <button class="btn btn-secondary" id="btnModeSingle" type="button">单人闯关</button>
+              <p class="mode-option__meta">从入门到专家，逐步增加颜色和槽位。</p>
             </div>
             <div class="mode-option mode-option--variant">
               <span class="mode-option__tag">进阶变体</span>
@@ -106,7 +106,38 @@
         </div>
       </div>
 
-      <!-- Screen 1: Setup -->
+      <!-- Screen 1: Single Presets -->
+      <div class="screen" id="screenSingleModes">
+        <div class="card text-center">
+          <div class="card-title">单人闯关</div>
+          <p class="text-hint">从入门到专家，颜色数和槽位会逐步增加。</p>
+          <div class="mode-actions">
+            <div class="mode-option">
+              <span class="mode-option__tag">新手起步</span>
+              <button class="btn btn-secondary" id="btnPresetStarter" type="button">入门模式</button>
+              <p class="mode-option__meta">6 色 · 4 槽 · 10 次</p>
+            </div>
+            <div class="mode-option mode-option--daily">
+              <span class="mode-option__tag">标准规则</span>
+              <button class="btn btn-primary" id="btnPresetClassic" type="button">经典模式</button>
+              <p class="mode-option__meta">7 色 · 4 槽 · 10 次</p>
+            </div>
+            <div class="mode-option">
+              <span class="mode-option__tag">增加一槽</span>
+              <button class="btn btn-secondary" id="btnPresetHard" type="button">困难模式</button>
+              <p class="mode-option__meta">7 色 · 5 槽 · 12 次</p>
+            </div>
+            <div class="mode-option">
+              <span class="mode-option__tag">极限挑战</span>
+              <button class="btn btn-secondary" id="btnPresetExpert" type="button">专家模式</button>
+              <p class="mode-option__meta">8 色 · 5 槽 · 10 次</p>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" id="btnBackToMode" type="button">返回主页</button>
+      </div>
+
+      <!-- Screen 2: Setup -->
       <div class="screen" id="screenSetup">
         <div class="card">
           <div class="card-title" id="setupTitle">玩家一 · 设置密码</div>
@@ -121,7 +152,7 @@
         <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
       </div>
 
-      <!-- Screen 2: Transition (Device Handoff) -->
+      <!-- Screen 3: Transition (Device Handoff) -->
       <div class="screen" id="screenTransition">
         <div class="card text-center">
           <div class="card-title">密码已锁定</div>
@@ -135,7 +166,7 @@
         <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
       </div>
 
-      <!-- Screen 3: Guessing -->
+      <!-- Screen 4: Guessing -->
       <div class="screen" id="screenGuess">
         <div class="card">
           <div class="card-title" id="guessTitle">玩家二 · 猜测颜色</div>
@@ -145,7 +176,7 @@
         </div>
 
         <div class="status-row">
-          <div class="status-box" id="statusBox" aria-live="polite">请选择4个颜色提交猜测</div>
+          <div class="status-box" id="statusBox" aria-live="polite">选满颜色后提交</div>
           <button class="help-link" id="btnOpenLegend" type="button" aria-expanded="false" aria-controls="legendSheet">反馈说明</button>
         </div>
 
@@ -175,7 +206,7 @@
             </div>
           </div>
           <p class="text-small legend-sheet__copy">每轮结束后先看 🟢 数量，再根据 🟠 调整颜色位置。</p>
-          <p class="text-small legend-sheet__copy">规则：10 次内猜中 4 色密码即可通关。经典和每日模式不允许重复色。</p>
+          <p class="text-small legend-sheet__copy">规则会随模式变化：在限定次数内猜中所有槽位即可通关；单人闯关和每日挑战不允许重复色。</p>
         </div>
       </div>
 

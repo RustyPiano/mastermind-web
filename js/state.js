@@ -1,9 +1,17 @@
 import { DEFAULT_MODE_ID } from './constants.js';
-import { generateSecret } from './engine.js';
+import { FEEDBACK, generateSecret } from './engine.js';
 import { getModeConfig } from './mode-config.js';
 
 function createEmptySlots(codeLength) {
   return Array(codeLength).fill(null);
+}
+
+function normalizeSlots(slots, codeLength) {
+  return Array.from({ length: codeLength }, (_, index) => slots?.[index] ?? null);
+}
+
+function normalizeFeedback(feedback, codeLength) {
+  return Array.from({ length: codeLength }, (_, index) => feedback?.[index] ?? FEEDBACK.NONE);
 }
 
 export const GameState = {
@@ -158,17 +166,20 @@ export const GameState = {
   },
 
   restore(data) {
+    const activeConfig = getModeConfig(data.variant ?? DEFAULT_MODE_ID);
+    const codeLength = activeConfig.codeLength;
+
     Object.assign(this, {
       mode: data.mode,
       variant: data.variant,
-      activeConfig: getModeConfig(data.variant ?? DEFAULT_MODE_ID),
+      activeConfig,
       startedAt: data.startedAt,
       challengeKey: data.challengeKey ?? null,
-      secretCode: [...data.secretCode],
-      currentGuess: [...data.currentGuess],
+      secretCode: normalizeSlots(data.secretCode, codeLength),
+      currentGuess: normalizeSlots(data.currentGuess, codeLength),
       guessHistory: data.guessHistory.map((entry) => ({
-        guess: [...entry.guess],
-        feedback: [...entry.feedback],
+        guess: normalizeSlots(entry.guess, codeLength),
+        feedback: normalizeFeedback(entry.feedback, codeLength),
       })),
       setupActiveSlot: data.setupActiveSlot,
       guessActiveSlot: data.guessActiveSlot,

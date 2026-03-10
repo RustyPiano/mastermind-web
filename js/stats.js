@@ -1,4 +1,11 @@
+import { SINGLE_PRESET_IDS } from './mode-config.js';
+
 const MAX_COMPLETED_DAILIES = 365;
+const TRACKED_VARIANTS = Object.freeze([
+  ...SINGLE_PRESET_IDS,
+  'daily',
+  'duplicates',
+]);
 
 /**
  * Returns true if currentKey is exactly one calendar day after prevKey.
@@ -30,6 +37,12 @@ function createModeStats() {
   };
 }
 
+function createTrackedModeStats() {
+  return Object.fromEntries(
+    TRACKED_VARIANTS.map((variant) => [variant, createModeStats()]),
+  );
+}
+
 export function createDefaultStats() {
   return {
     version: 1,
@@ -43,8 +56,7 @@ export function createDefaultStats() {
       bestDailyWin: 0,
     },
     modes: {
-      classic: createModeStats(),
-      daily: createModeStats(),
+      ...createTrackedModeStats(),
       dual: {
         gamesPlayed: 0,
       },
@@ -56,6 +68,15 @@ export function createDefaultStats() {
 
 export function normalizeStats(stats) {
   const defaults = createDefaultStats();
+  const nextModes = Object.fromEntries(
+    TRACKED_VARIANTS.map((variant) => [
+      variant,
+      {
+        ...defaults.modes[variant],
+        ...(stats?.modes?.[variant] ?? {}),
+      },
+    ]),
+  );
 
   if (!stats || typeof stats !== 'object') {
     return defaults;
@@ -73,14 +94,7 @@ export function normalizeStats(stats) {
       ...(stats.streaks ?? {}),
     },
     modes: {
-      classic: {
-        ...defaults.modes.classic,
-        ...(stats.modes?.classic ?? {}),
-      },
-      daily: {
-        ...defaults.modes.daily,
-        ...(stats.modes?.daily ?? {}),
-      },
+      ...nextModes,
       dual: {
         ...defaults.modes.dual,
         ...(stats.modes?.dual ?? {}),
@@ -124,8 +138,10 @@ export function getAverageRounds(modeStats) {
 export function recordGameResult(stats, result) {
   const nextStats = normalizeStats(stats);
   const isDaily = result.variant === 'daily';
-  const isClassic = result.variant === 'classic' && result.mode === 'single';
   const isDual = result.mode === 'dual';
+  const trackedVariant = result.mode === 'single' && TRACKED_VARIANTS.includes(result.variant)
+    ? result.variant
+    : null;
 
   if (isDaily && hasCompletedDaily(nextStats, result.challengeKey)) {
     return nextStats;
@@ -138,31 +154,20 @@ export function recordGameResult(stats, result) {
     nextStats.totals.losses += 1;
   }
 
-  if (isClassic) {
-    nextStats.modes.classic.gameCount += 1;
-    nextStats.modes.classic.totalRoundsSum += result.rounds;
-    nextStats.modes.classic.wins += result.win ? 1 : 0;
-    nextStats.modes.classic.losses += result.win ? 0 : 1;
+  if (trackedVariant) {
+    nextStats.modes[trackedVariant].gameCount += 1;
+    nextStats.modes[trackedVariant].totalRoundsSum += result.rounds;
+    nextStats.modes[trackedVariant].wins += result.win ? 1 : 0;
+    nextStats.modes[trackedVariant].losses += result.win ? 0 : 1;
 
     if (result.win) {
-      nextStats.modes.classic.bestRounds = nextStats.modes.classic.bestRounds === null
+      nextStats.modes[trackedVariant].bestRounds = nextStats.modes[trackedVariant].bestRounds === null
         ? result.rounds
-        : Math.min(nextStats.modes.classic.bestRounds, result.rounds);
+        : Math.min(nextStats.modes[trackedVariant].bestRounds, result.rounds);
     }
   }
 
   if (isDaily) {
-    nextStats.modes.daily.gameCount += 1;
-    nextStats.modes.daily.totalRoundsSum += result.rounds;
-    nextStats.modes.daily.wins += result.win ? 1 : 0;
-    nextStats.modes.daily.losses += result.win ? 0 : 1;
-
-    if (result.win) {
-      nextStats.modes.daily.bestRounds = nextStats.modes.daily.bestRounds === null
-        ? result.rounds
-        : Math.min(nextStats.modes.daily.bestRounds, result.rounds);
-    }
-
     nextStats.completedDailyKeys = addCompletedDailyKey(
       nextStats.completedDailyKeys,
       result.challengeKey,

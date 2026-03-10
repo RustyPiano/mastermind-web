@@ -48,9 +48,28 @@ describe('buildShareText', () => {
         { feedback: [FEEDBACK.EXACT, FEEDBACK.NONE, FEEDBACK.NONE, FEEDBACK.NONE] },
       ],
     })).toBe([
-      '密码机 单人经典',
+      '密码机 经典模式',
       'X/10',
       '🟢⚪⚪⚪',
+      'https://mastermind.rustypiano.com/',
+    ].join('\n'));
+  });
+
+  it('builds expert share text with the mode label', () => {
+    expect(buildShareText({
+      mode: 'single',
+      variant: 'expert',
+      challengeKey: null,
+      rounds: 8,
+      maxGuesses: 10,
+      win: true,
+      history: [
+        { feedback: [FEEDBACK.EXACT, FEEDBACK.EXACT, FEEDBACK.MISPLACED, FEEDBACK.NONE, FEEDBACK.NONE] },
+      ],
+    })).toBe([
+      '密码机 专家模式',
+      '8/10',
+      '🟢🟢🟠⚪⚪',
       'https://mastermind.rustypiano.com/',
     ].join('\n'));
   });

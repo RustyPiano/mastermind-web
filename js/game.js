@@ -1,9 +1,9 @@
-import { COLORS, DEFAULT_MODE_ID } from './constants.js';
+import { DEFAULT_MODE_ID, getAvailableColors } from './constants.js';
 import { GameState } from './state.js';
 import { calcFeedback, FEEDBACK, isWinningFeedback } from './engine.js';
 import { dateToChallengeKey, generateDailySecret, isDailySessionForKey } from './daily.js';
 import { hasCompletedDaily, recordGameResult } from './stats.js';
-import { getModeConfig } from './mode-config.js';
+import { SINGLE_PRESET_IDS, getModeConfig, isSinglePresetVariant } from './mode-config.js';
 import {
   clearSession,
   createSessionSnapshot,
@@ -45,6 +45,16 @@ import {
 let saveScheduled = false;
 const challengeTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 let latestResult = null;
+const presetButtonIds = Object.freeze({
+  starter: 'btnPresetStarter',
+  classic: 'btnPresetClassic',
+  hard: 'btnPresetHard',
+  expert: 'btnPresetExpert',
+});
+
+function getColorIdsForConfig(config) {
+  return getAvailableColors(config.paletteColorCount).map((color) => color.id);
+}
 
 function setCurrentScreen(screenId) {
   GameState.setScreen(screenId);
@@ -63,15 +73,16 @@ function scheduleSave() {
 }
 
 function getGuessStatusMessage() {
+  const { codeLength } = GameState.activeConfig;
   const prefix = GameState.variant === 'daily'
     ? `每日挑战 ${GameState.challengeKey} · `
     : '';
 
   if (GameState.isGuessComplete()) {
-    return `${prefix}已选满 4 色，点击提交`;
+    return `${prefix}已选满 ${codeLength} 色，点击提交`;
   }
 
-  return `${prefix}选满 4 色后提交`;
+  return `${prefix}选满 ${codeLength} 色后提交`;
 }
 
 function getRoundSummaryMessage(roundNumber, exactCount, misplacedCount) {
@@ -220,15 +231,21 @@ function startGuessing() {
   scheduleSave();
 }
 
-function startSingleMode() {
+function openSingleModes() {
+  setCurrentScreen('screenSingleModes');
+}
+
+function startSingleMode(variant = 'classic') {
+  const config = getModeConfig(variant);
+
   GameState.reset();
   GameState.setMode('single');
-  GameState.setVariant('classic');
-  GameState.setActiveConfig(getModeConfig('classic'));
+  GameState.setVariant(variant);
+  GameState.setActiveConfig(config);
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
-  GameState.generateRandomSecret(COLORS.map(c => c.id));
-  applyModeLabels('single', 'classic');
+  GameState.generateRandomSecret(getColorIdsForConfig(config));
+  applyModeLabels('single', variant);
   buildBoard();
   scheduleSave();
   startGuessing();
@@ -236,19 +253,20 @@ function startSingleMode() {
 
 function startDailyMode() {
   const challengeKey = getTodayChallengeKey();
+  const config = getModeConfig('daily');
 
   GameState.reset();
   GameState.setMode('single');
   GameState.setVariant('daily');
-  GameState.setActiveConfig(getModeConfig('daily'));
+  GameState.setActiveConfig(config);
   GameState.setStartedAt();
   GameState.setChallengeKey(challengeKey);
   GameState.setStatus('in_progress');
   GameState.secretCode = generateDailySecret({
     dateKey: challengeKey,
-    colors: COLORS.map((color) => color.id),
-    codeLength: GameState.activeConfig.codeLength,
-    allowDuplicates: GameState.activeConfig.allowDuplicates,
+    colors: getColorIdsForConfig(config),
+    codeLength: config.codeLength,
+    allowDuplicates: config.allowDuplicates,
   });
   applyModeLabels('single', 'daily', challengeKey);
   buildBoard();
@@ -257,13 +275,15 @@ function startDailyMode() {
 }
 
 function startDuplicatesMode() {
+  const config = getModeConfig('duplicates');
+
   GameState.reset();
   GameState.setMode('single');
   GameState.setVariant('duplicates');
-  GameState.setActiveConfig(getModeConfig('duplicates'));
+  GameState.setActiveConfig(config);
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
-  GameState.generateRandomSecret(COLORS.map(c => c.id));
+  GameState.generateRandomSecret(getColorIdsForConfig(config));
   applyModeLabels('single', 'duplicates');
   buildBoard();
   scheduleSave();
@@ -398,6 +418,8 @@ function replayGame() {
     startSingleMode();
   } else if (mode === 'single' && variant === 'duplicates') {
     startDuplicatesMode();
+  } else if (mode === 'single' && isSinglePresetVariant(variant)) {
+    startSingleMode(variant);
   } else if (mode === 'single') {
     startSingleMode();
   } else {
@@ -411,7 +433,7 @@ function replayGame() {
 
 function bindEvents() {
   document.getElementById('btnModeSingle')
-    .addEventListener('click', startSingleMode);
+    .addEventListener('click', openSingleModes);
 
   document.getElementById('btnModeDaily')
     .addEventListener('click', startDailyMode);
@@ -421,6 +443,16 @@ function bindEvents() {
 
   document.getElementById('btnModeDual')
     .addEventListener('click', startDualMode);
+
+  SINGLE_PRESET_IDS.forEach((variant) => {
+    document.getElementById(presetButtonIds[variant])
+      .addEventListener('click', () => startSingleMode(variant));
+  });
+
+  document.getElementById('btnBackToMode')
+    .addEventListener('click', () => {
+      setCurrentScreen('screenMode');
+    });
 
   document.getElementById('btnConfirmSecret')
     .addEventListener('click', confirmSecret);

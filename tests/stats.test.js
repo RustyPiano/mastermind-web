@@ -22,6 +22,30 @@ describe('recordGameResult', () => {
     });
   });
 
+  it('tracks starter and hard runs in separate mode buckets', () => {
+    let stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'starter',
+      challengeKey: null,
+      rounds: 5,
+      win: true,
+      finishedAt: '2026-03-10T08:00:00.000Z',
+    });
+
+    stats = recordGameResult(stats, {
+      mode: 'single',
+      variant: 'hard',
+      challengeKey: null,
+      rounds: 9,
+      win: true,
+      finishedAt: '2026-03-10T09:00:00.000Z',
+    });
+
+    expect(stats.modes.starter.bestRounds).toBe(5);
+    expect(stats.modes.hard.bestRounds).toBe(9);
+    expect(stats.modes.classic.bestRounds).toBeNull();
+  });
+
   it('increments the daily streak on consecutive daily wins', () => {
     let stats = recordGameResult(null, {
       mode: 'single',
@@ -125,6 +149,25 @@ describe('recordGameResult', () => {
     });
 
     expect(getAverageRounds(stats.modes.classic)).toBe(4);
+  });
+
+  it('tracks duplicates as its own stats bucket', () => {
+    const stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'duplicates',
+      challengeKey: null,
+      rounds: 7,
+      win: false,
+      finishedAt: '2026-03-10T08:00:00.000Z',
+    });
+
+    expect(stats.modes.duplicates).toMatchObject({
+      bestRounds: null,
+      totalRoundsSum: 7,
+      gameCount: 1,
+      wins: 0,
+      losses: 1,
+    });
   });
 
   it('prevents double-counting the same daily challenge', () => {

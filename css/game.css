@@ -136,10 +136,18 @@
   --ball-size: var(--palette-ball-size);
 }
 
+.palette[data-color-count="6"] {
+  --palette-row-width: 144px;
+}
+
 @media (max-width: 640px) {
   .palette {
     --palette-ball-size: 36px;
     --palette-row-width: 180px;
+  }
+
+  .palette[data-color-count="6"] {
+    --palette-row-width: 132px;
   }
 }
 

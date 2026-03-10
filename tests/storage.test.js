@@ -91,6 +91,26 @@ describe('storage helpers', () => {
     expect(GameState.status).toBe(session.status);
   });
 
+  it('pads legacy session arrays to match the current mode config', () => {
+    GameState.restore({
+      ...makeSession(),
+      variant: 'hard',
+      secretCode: ['c1', 'c2', 'c3', 'c4'],
+      currentGuess: ['c1', 'c2', 'c3', 'c4'],
+      guessHistory: [
+        {
+          guess: ['c4', 'c3', 'c2', 'c1'],
+          feedback: ['misplaced', 'misplaced', 'misplaced', 'misplaced'],
+        },
+      ],
+    });
+
+    expect(GameState.secretCode).toEqual(['c1', 'c2', 'c3', 'c4', null]);
+    expect(GameState.currentGuess).toEqual(['c1', 'c2', 'c3', 'c4', null]);
+    expect(GameState.guessHistory[0].feedback).toHaveLength(5);
+    expect(GameState.guessHistory[0].feedback[4]).toBe('none');
+  });
+
   it('returns null and clears malformed saved session payloads', () => {
     localStorage.setItem(SESSION_STORAGE_KEY, '{broken');
 
@@ -129,8 +149,12 @@ describe('storage helpers', () => {
       totals: { gamesPlayed: 0, wins: 0, losses: 0 },
       streaks: { currentDailyWin: 0, bestDailyWin: 0 },
       modes: {
+        starter: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         classic: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        hard: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        expert: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         daily: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        duplicates: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         dual: { gamesPlayed: 0 },
       },
       completedDailyKeys: [],
@@ -146,8 +170,12 @@ describe('storage helpers', () => {
       totals: { gamesPlayed: 1, wins: 0, losses: 0 },
       streaks: { currentDailyWin: 0, bestDailyWin: 0 },
       modes: {
+        starter: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         classic: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        hard: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        expert: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         daily: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        duplicates: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         dual: { gamesPlayed: 0 },
       },
       completedDailyKeys: ['2026-03-10'],
@@ -167,8 +195,12 @@ describe('storage helpers', () => {
       totals: { gamesPlayed: 0, wins: 0, losses: 0 },
       streaks: { currentDailyWin: 0, bestDailyWin: 0 },
       modes: {
+        starter: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         classic: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        hard: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        expert: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         daily: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
+        duplicates: { bestRounds: null, totalRoundsSum: 0, gameCount: 0, wins: 0, losses: 0 },
         dual: { gamesPlayed: 0 },
       },
       completedDailyKeys: ['2026-03-10'],

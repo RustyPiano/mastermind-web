@@ -6,9 +6,14 @@ export const COLORS = [
   { id: 'c5', name: '蓝', bg: '#0a84ff' },
   { id: 'c6', name: '紫', bg: '#bf5af2' },
   { id: 'c7', name: '白', bg: '#ffffff' },
+  { id: 'c8', name: '青', bg: '#64d2ff' },
 ];
 
 export const MAX_GUESSES = 10;
 export const CODE_LENGTH = 4;
 export const ALLOW_DUPLICATE_COLORS = false;
 export const DEFAULT_MODE_ID = 'classic';
+
+export function getAvailableColors(colorCount = COLORS.length) {
+  return COLORS.slice(0, colorCount);
+}

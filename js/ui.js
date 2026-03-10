@@ -1,4 +1,4 @@
-import { COLORS } from './constants.js';
+import { COLORS, getAvailableColors } from './constants.js';
 import { GameState } from './state.js';
 import { FEEDBACK } from './engine.js';
 import { getAverageRounds } from './stats.js';
@@ -8,6 +8,10 @@ import { getModeConfig } from './mode-config.js';
 
 function getColor(colorId) {
   return COLORS.find(c => c.id === colorId) || null;
+}
+
+function getPaletteColors() {
+  return getAvailableColors(GameState.activeConfig.paletteColorCount);
 }
 
 /* ---- Ball Factory ---- */
@@ -139,8 +143,10 @@ export function buildSecretRow(onClickSlot) {
 function buildPalette(containerId, isUsed, onClick) {
   const pal = document.getElementById(containerId);
   pal.innerHTML = '';
+  const paletteColors = getPaletteColors();
+  pal.dataset.colorCount = String(paletteColors.length);
 
-  COLORS.forEach(c => {
+  paletteColors.forEach(c => {
     const ball = makeBall(c.id);
     ball.setAttribute('aria-label', c.name);
     const used = isUsed(c.id);
@@ -248,12 +254,10 @@ export function renderFeedback(round, feedback) {
 export function showResult(win, rounds) {
   const isSingleMode = GameState.mode === 'single';
   const winnerText = isSingleMode ? '你' : '玩家二';
-  const modeLabel = getModeConfig(GameState.variant).label;
+  const modeLabel = GameState.mode === 'dual' ? '双人对战' : getModeConfig(GameState.variant).label;
   const resultLabel = GameState.variant === 'daily'
-    ? `${modeLabel} ${GameState.challengeKey}`
-    : GameState.mode === 'single'
-      ? modeLabel
-      : '双人对战';
+    ? `${modeLabel} · ${GameState.challengeKey}`
+    : modeLabel;
   const roundText = rounds ? `<strong>${rounds}</strong> 次` : `${GameState.activeConfig.maxGuesses} 次`;
   let summaryText = '';
 
@@ -331,6 +335,7 @@ export function applyModeLabels(mode, variant = 'classic', challengeKey = null) 
   const setupTitle = document.getElementById('setupTitle');
   const guessTitle = document.getElementById('guessTitle');
   if (!setupTitle || !guessTitle) return;
+  const modeLabel = getModeConfig(variant).label;
 
   if (mode === 'single' && variant === 'daily') {
     setupTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
@@ -339,8 +344,8 @@ export function applyModeLabels(mode, variant = 'classic', challengeKey = null) 
     setupTitle.textContent = '重复色模式 · 电脑已生成密码';
     guessTitle.textContent = '重复色模式 · 允许重复颜色';
   } else if (mode === 'single') {
-    setupTitle.textContent = '单人模式 · 电脑已生成密码';
-    guessTitle.textContent = '单人模式 · 你来猜测';
+    setupTitle.textContent = `${modeLabel} · 电脑已生成密码`;
+    guessTitle.textContent = `${modeLabel} · 你来猜测`;
   } else {
     setupTitle.textContent = '玩家一 · 设置密码';
     guessTitle.textContent = '玩家二 · 猜测颜色';
@@ -396,29 +401,24 @@ export function renderResultStats(stats, result) {
     return;
   }
 
-  if (result.variant === 'classic' && result.mode === 'single') {
-    const average = getAverageRounds(stats.modes.classic);
+  if (result.mode === 'single') {
+    const modeStats = stats.modes?.[result.variant];
+    const modeLabel = getModeConfig(result.variant).label;
+    const average = getAverageRounds(modeStats);
     const averageText = average === null ? '-' : average.toFixed(1);
-    const bestText = stats.modes.classic.bestRounds;
+    const bestText = modeStats?.bestRounds ?? null;
     const bestSummary = bestText === null
-      ? '这是你的第一条经典记录'
+      ? `${modeLabel}暂时还没有通关记录`
       : result.win && result.rounds === bestText
-        ? '你刷新或追平了经典最佳'
+        ? `你刷新或追平了${modeLabel}最佳`
         : result.win
-          ? `距离经典最佳还差 ${Math.max(result.rounds - bestText, 0)} 步`
-          : '这局没有刷新经典最佳';
-    target.textContent = `${bestSummary}\n经典最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
+          ? `距离${modeLabel}最佳还差 ${Math.max(result.rounds - bestText, 0)} 步`
+          : `当前${modeLabel}最佳仍是 ${bestText} 步`;
+    target.textContent = `${bestSummary}\n${modeLabel}最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
     return;
   }
 
-  if (result.variant === 'duplicates') {
-    target.textContent = result.win
-      ? '这局使用的是允许重复色的规则\n如果觉得经典模式太简单，可以继续挑战它'
-      : '重复色模式会让排除法更难\n再来一局会更容易建立感觉';
-    return;
-  }
-
-  target.textContent = `累计对局 ${stats.totals.gamesPlayed} 场`;
+  target.textContent = `累计双人对战 ${stats.modes.dual.gamesPlayed} 局`;
 }
 
 export function setStatsPanelExpanded(expanded) {

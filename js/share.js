@@ -1,4 +1,5 @@
 import { FEEDBACK } from './engine.js';
+import { getModeConfig } from './mode-config.js';
 
 const SITE_URL = 'https://mastermind.rustypiano.com/';
 
@@ -17,7 +18,7 @@ function buildTitle(result) {
     return '密码机 双人对战';
   }
 
-  return '密码机 单人经典';
+  return `密码机 ${getModeConfig(result.variant).label}`;
 }
 
 export function buildShareText(result) {
