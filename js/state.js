@@ -1,17 +1,19 @@
-import { CODE_LENGTH, ALLOW_DUPLICATE_COLORS } from './constants.js';
+import { DEFAULT_MODE_ID } from './constants.js';
 import { generateSecret } from './engine.js';
+import { getModeConfig } from './mode-config.js';
 
-function createEmptySlots() {
-  return Array(CODE_LENGTH).fill(null);
+function createEmptySlots(codeLength) {
+  return Array(codeLength).fill(null);
 }
 
 export const GameState = {
   mode: 'dual',
-  variant: 'classic',
+  variant: DEFAULT_MODE_ID,
+  activeConfig: getModeConfig(DEFAULT_MODE_ID),
   startedAt: null,
   challengeKey: null,
-  secretCode: createEmptySlots(),
-  currentGuess: createEmptySlots(),
+  secretCode: createEmptySlots(getModeConfig(DEFAULT_MODE_ID).codeLength),
+  currentGuess: createEmptySlots(getModeConfig(DEFAULT_MODE_ID).codeLength),
   guessHistory: [],
 
   setupActiveSlot: 0,
@@ -25,6 +27,15 @@ export const GameState = {
 
   setVariant(variant) {
     this.variant = variant;
+    this.activeConfig = getModeConfig(variant);
+  },
+
+  setActiveConfig(config) {
+    this.activeConfig = config;
+    this.secretCode = createEmptySlots(config.codeLength);
+    this.currentGuess = createEmptySlots(config.codeLength);
+    this.setupActiveSlot = 0;
+    this.guessActiveSlot = 0;
   },
 
   setStartedAt(timestamp = new Date().toISOString()) {
@@ -46,8 +57,8 @@ export const GameState = {
   generateRandomSecret(colors) {
     this.secretCode = generateSecret({
       colors,
-      codeLength: CODE_LENGTH,
-      allowDuplicates: ALLOW_DUPLICATE_COLORS,
+      codeLength: this.activeConfig.codeLength,
+      allowDuplicates: this.activeConfig.allowDuplicates,
     });
     this.setupActiveSlot = 0;
   },
@@ -55,7 +66,7 @@ export const GameState = {
   /* ---- Secret Code (Setup) ---- */
 
   setSecretColor(colorId) {
-    if (this.secretCode.includes(colorId)) return false;
+    if (!this.activeConfig.allowDuplicates && this.secretCode.includes(colorId)) return false;
     this.secretCode[this.setupActiveSlot] = colorId;
     this.advanceSetupSlot();
     return true;
@@ -71,7 +82,7 @@ export const GameState = {
   },
 
   advanceSetupSlot() {
-    for (let i = 0; i < CODE_LENGTH; i++) {
+    for (let i = 0; i < this.activeConfig.codeLength; i++) {
       if (!this.secretCode[i]) {
         this.setupActiveSlot = i;
         break;
@@ -84,13 +95,14 @@ export const GameState = {
   },
 
   isSecretUsed(colorId) {
+    if (this.activeConfig.allowDuplicates) return false;
     return this.secretCode.includes(colorId);
   },
 
   /* ---- Current Guess ---- */
 
   setGuessColor(colorId) {
-    if (this.currentGuess.includes(colorId)) return false;
+    if (!this.activeConfig.allowDuplicates && this.currentGuess.includes(colorId)) return false;
     this.currentGuess[this.guessActiveSlot] = colorId;
     this.advanceGuessSlot();
     return true;
@@ -106,7 +118,7 @@ export const GameState = {
   },
 
   advanceGuessSlot() {
-    for (let i = 0; i < CODE_LENGTH; i++) {
+    for (let i = 0; i < this.activeConfig.codeLength; i++) {
       if (!this.currentGuess[i]) {
         this.guessActiveSlot = i;
         break;
@@ -119,6 +131,7 @@ export const GameState = {
   },
 
   isGuessUsed(colorId) {
+    if (this.activeConfig.allowDuplicates) return false;
     return this.currentGuess.includes(colorId);
   },
 
@@ -127,7 +140,7 @@ export const GameState = {
   },
 
   clearGuess() {
-    this.currentGuess = createEmptySlots();
+    this.currentGuess = createEmptySlots(this.activeConfig.codeLength);
     this.guessActiveSlot = 0;
   },
 
@@ -148,6 +161,7 @@ export const GameState = {
     Object.assign(this, {
       mode: data.mode,
       variant: data.variant,
+      activeConfig: getModeConfig(data.variant ?? DEFAULT_MODE_ID),
       startedAt: data.startedAt,
       challengeKey: data.challengeKey ?? null,
       secretCode: [...data.secretCode],
@@ -167,11 +181,12 @@ export const GameState = {
 
   reset() {
     this.mode = 'dual';
-    this.variant = 'classic';
+    this.variant = DEFAULT_MODE_ID;
+    this.activeConfig = getModeConfig(DEFAULT_MODE_ID);
     this.startedAt = null;
     this.challengeKey = null;
-    this.secretCode = createEmptySlots();
-    this.currentGuess = createEmptySlots();
+    this.secretCode = createEmptySlots(this.activeConfig.codeLength);
+    this.currentGuess = createEmptySlots(this.activeConfig.codeLength);
     this.guessHistory = [];
     this.setupActiveSlot = 0;
     this.guessActiveSlot = 0;

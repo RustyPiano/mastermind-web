@@ -116,37 +116,7 @@
   --ball-size: var(--palette-ball-size);
 }
 
-.mobile-current-guess {
-  display: none;
-}
-
-.mobile-current-guess__label {
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  text-align: center;
-  margin-bottom: var(--space-sm);
-}
-
-.mobile-current-guess__row {
-  margin: 0 0 var(--space-sm);
-}
-
-.mobile-current-guess__hint {
-  margin-bottom: var(--space-sm);
-}
-
 @media (max-width: 640px) {
-  .mobile-current-guess {
-    display: block;
-    padding: 16px 14px 12px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-sm);
-    background: var(--bg-subtle);
-  }
-
   .palette {
     --palette-ball-size: 36px;
     --palette-row-width: 180px;
@@ -363,23 +333,6 @@
     margin-bottom: 10px;
   }
 
-  body.game-phase--guessing .mobile-current-guess {
-    padding: 10px 10px 8px;
-    margin-bottom: 8px;
-  }
-
-  body.game-phase--guessing .mobile-current-guess__label {
-    margin-bottom: 6px;
-  }
-
-  body.game-phase--guessing .mobile-current-guess__row {
-    margin-bottom: 6px;
-  }
-
-  body.game-phase--guessing .mobile-current-guess__hint {
-    display: none;
-  }
-
   body.game-phase--guessing .secret-row {
     gap: 10px;
     margin: 10px 0;
@@ -439,10 +392,6 @@
 
   body.game-phase--guessing .side-panel .card {
     padding: 8px 10px;
-  }
-
-  body.game-phase--guessing .mobile-current-guess {
-    padding: 8px 8px 6px;
   }
 
   body.game-phase--guessing .palette {

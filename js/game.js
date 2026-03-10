@@ -1,8 +1,9 @@
-import { COLORS, MAX_GUESSES, CODE_LENGTH } from './constants.js';
+import { COLORS, DEFAULT_MODE_ID } from './constants.js';
 import { GameState } from './state.js';
 import { calcFeedback, FEEDBACK, isWinningFeedback } from './engine.js';
 import { dateToChallengeKey, generateDailySecret, isDailySessionForKey } from './daily.js';
 import { hasCompletedDaily, recordGameResult } from './stats.js';
+import { getModeConfig } from './mode-config.js';
 import {
   clearSession,
   createSessionSnapshot,
@@ -73,7 +74,7 @@ function getGuessStatusMessage() {
 }
 
 function getRoundSummaryMessage(roundNumber, exactCount, misplacedCount) {
-  const remaining = MAX_GUESSES - roundNumber;
+  const remaining = GameState.activeConfig.maxGuesses - roundNumber;
   return `第 ${roundNumber} 轮：${exactCount} 个位置正确，${misplacedCount} 个颜色正确但位置错误。还剩 ${remaining} 次机会。`;
 }
 
@@ -126,7 +127,7 @@ function recordFinishedGame({ win, rounds }) {
     history: GameState.guessHistory.map((entry) => ({
       feedback: [...entry.feedback],
     })),
-    maxGuesses: MAX_GUESSES,
+    maxGuesses: GameState.activeConfig.maxGuesses,
   };
 }
 
@@ -217,6 +218,7 @@ function startSingleMode() {
   GameState.reset();
   GameState.setMode('single');
   GameState.setVariant('classic');
+  GameState.setActiveConfig(getModeConfig('classic'));
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
   GameState.generateRandomSecret(COLORS.map(c => c.id));
@@ -232,16 +234,31 @@ function startDailyMode() {
   GameState.reset();
   GameState.setMode('single');
   GameState.setVariant('daily');
+  GameState.setActiveConfig(getModeConfig('daily'));
   GameState.setStartedAt();
   GameState.setChallengeKey(challengeKey);
   GameState.setStatus('in_progress');
   GameState.secretCode = generateDailySecret({
     dateKey: challengeKey,
     colors: COLORS.map((color) => color.id),
-    codeLength: CODE_LENGTH,
-    allowDuplicates: false,
+    codeLength: GameState.activeConfig.codeLength,
+    allowDuplicates: GameState.activeConfig.allowDuplicates,
   });
   applyModeLabels('single', 'daily', challengeKey);
+  buildBoard();
+  scheduleSave();
+  startGuessing();
+}
+
+function startDuplicatesMode() {
+  GameState.reset();
+  GameState.setMode('single');
+  GameState.setVariant('duplicates');
+  GameState.setActiveConfig(getModeConfig('duplicates'));
+  GameState.setStartedAt();
+  GameState.setStatus('in_progress');
+  GameState.generateRandomSecret(COLORS.map(c => c.id));
+  applyModeLabels('single', 'duplicates');
   buildBoard();
   scheduleSave();
   startGuessing();
@@ -250,7 +267,8 @@ function startDailyMode() {
 function startDualMode() {
   GameState.reset();
   GameState.setMode('dual');
-  GameState.setVariant('classic');
+  GameState.setVariant(DEFAULT_MODE_ID);
+  GameState.setActiveConfig(getModeConfig(DEFAULT_MODE_ID));
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
   applyModeLabels('dual', 'classic');
@@ -312,7 +330,7 @@ function submitGuess() {
   const exactCount = feedback.filter(f => f === FEEDBACK.EXACT).length;
   const misplacedCount = feedback.filter(f => f === FEEDBACK.MISPLACED).length;
 
-  if (isWinningFeedback(feedback, CODE_LENGTH)) {
+  if (isWinningFeedback(feedback, GameState.activeConfig.codeLength)) {
     GameState.setStatus('won');
     recordFinishedGame({ win: true, rounds: r + 1 });
     clearSession();
@@ -325,7 +343,7 @@ function submitGuess() {
     return;
   }
 
-  if (r + 1 >= MAX_GUESSES) {
+  if (r + 1 >= GameState.activeConfig.maxGuesses) {
     GameState.setStatus('lost');
     recordFinishedGame({ win: false, rounds: r + 1 });
     clearSession();
@@ -371,6 +389,8 @@ function replayGame() {
   setShareButtonEnabled(false);
   if (mode === 'single' && variant === 'daily') {
     startDailyMode();
+  } else if (mode === 'single' && variant === 'duplicates') {
+    startDuplicatesMode();
   } else if (mode === 'single') {
     startSingleMode();
   } else {
@@ -388,6 +408,9 @@ function bindEvents() {
 
   document.getElementById('btnModeDaily')
     .addEventListener('click', startDailyMode);
+
+  document.getElementById('btnModeDuplicates')
+    .addEventListener('click', startDuplicatesMode);
 
   document.getElementById('btnModeDual')
     .addEventListener('click', startDualMode);

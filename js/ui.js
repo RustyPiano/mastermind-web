@@ -1,7 +1,8 @@
-import { COLORS, MAX_GUESSES, CODE_LENGTH } from './constants.js';
+import { COLORS } from './constants.js';
 import { GameState } from './state.js';
 import { FEEDBACK } from './engine.js';
 import { getAverageRounds } from './stats.js';
+import { getModeConfig } from './mode-config.js';
 
 /* ---- Helpers ---- */
 
@@ -35,8 +36,9 @@ export function makeBall(colorId, sizeVar) {
 export function buildBoard() {
   const container = document.getElementById('rowsContainer');
   container.innerHTML = '';
+  const { maxGuesses, codeLength } = GameState.activeConfig;
 
-  for (let r = 0; r < MAX_GUESSES; r++) {
+  for (let r = 0; r < maxGuesses; r++) {
     const row = document.createElement('div');
     row.className = 'guess-row';
     row.id = `row-${r}`;
@@ -48,7 +50,7 @@ export function buildBoard() {
 
     const pegs = document.createElement('div');
     pegs.className = 'pegs';
-    for (let i = 0; i < CODE_LENGTH; i++) {
+    for (let i = 0; i < codeLength; i++) {
       const peg = makeBall(null, '--ball-sm');
       peg.id = `g${r}-${i}`;
       pegs.appendChild(peg);
@@ -57,7 +59,7 @@ export function buildBoard() {
 
     const fb = document.createElement('div');
     fb.className = 'feedback';
-    for (let i = 0; i < CODE_LENGTH; i++) {
+    for (let i = 0; i < codeLength; i++) {
       const dot = document.createElement('div');
       dot.className = 'fb-dot';
       dot.id = `fb${r}-${i}`;
@@ -74,9 +76,10 @@ export function buildBoard() {
 
 export function highlightActiveRow() {
   const r = GameState.currentRound();
+  const { maxGuesses } = GameState.activeConfig;
   document.querySelectorAll('.active-arrow').forEach(e => e.remove());
 
-  for (let i = 0; i < MAX_GUESSES; i++) {
+  for (let i = 0; i < maxGuesses; i++) {
     const row = document.getElementById(`row-${i}`);
     if (row) row.classList.toggle('active', i === r);
   }
@@ -94,7 +97,7 @@ export function highlightActiveRow() {
 }
 
 export function freezeRow(r) {
-  for (let i = 0; i < CODE_LENGTH; i++) {
+  for (let i = 0; i < GameState.activeConfig.codeLength; i++) {
     const ball = document.getElementById(`g${r}-${i}`);
     if (ball) {
       ball.classList.remove('ball--focused');
@@ -112,7 +115,7 @@ export function buildSecretRow(onClickSlot) {
   const row = document.getElementById('secretRow');
   row.innerHTML = '';
 
-  for (let i = 0; i < CODE_LENGTH; i++) {
+  for (let i = 0; i < GameState.activeConfig.codeLength; i++) {
     const ball = makeBall(GameState.secretCode[i], '--ball-md');
     ball.style.cursor = 'pointer';
     
@@ -161,39 +164,11 @@ export function buildGuessPalette(onClick) {
   buildPalette('guessPalette', id => GameState.isGuessUsed(id), onClick);
 }
 
-export function buildMobileGuessRow(onClickSlot) {
-  const row = document.getElementById('mobileGuessRow');
-  if (!row) return;
-
-  row.innerHTML = '';
-
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    const ball = makeBall(GameState.currentGuess[i], '--ball-md');
-    ball.style.cursor = 'pointer';
-
-    if (GameState.guessActiveSlot === i) {
-      ball.classList.add('ball--focused');
-    }
-
-    if (GameState.currentGuess[i]) {
-      ball.setAttribute('aria-label', `移除并聚焦第${i + 1}个位置`);
-    } else {
-      ball.setAttribute('aria-label', `聚焦位置 ${i + 1}`);
-    }
-
-    if (onClickSlot) {
-      ball.addEventListener('click', () => onClickSlot(i));
-    }
-
-    row.appendChild(ball);
-  }
-}
-
 /* ---- Current Guess Display ---- */
 
 export function updateCurrentGuessDisplay(onClickSlot) {
   const r = GameState.currentRound();
-  for (let i = 0; i < CODE_LENGTH; i++) {
+  for (let i = 0; i < GameState.activeConfig.codeLength; i++) {
     const old = document.getElementById(`g${r}-${i}`);
     if (!old) continue;
 
@@ -211,8 +186,6 @@ export function updateCurrentGuessDisplay(onClickSlot) {
 
     old.replaceWith(ball);
   }
-
-  buildMobileGuessRow(onClickSlot);
 }
 
 export function restoreBoardHistory(onClickSlot) {
@@ -275,17 +248,18 @@ export function renderFeedback(round, feedback) {
 export function showResult(win, rounds) {
   const isSingleMode = GameState.mode === 'single';
   const winnerText = isSingleMode ? '你' : '玩家二';
+  const modeLabel = getModeConfig(GameState.variant).label;
   const resultLabel = GameState.variant === 'daily'
-    ? `每日挑战 ${GameState.challengeKey}`
+    ? `${modeLabel} ${GameState.challengeKey}`
     : GameState.mode === 'single'
-      ? '单人经典'
+      ? modeLabel
       : '双人对战';
 
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
   document.getElementById('overlaySub').innerHTML = win
     ? `${resultLabel}<br>${winnerText}用了 <strong>${rounds}</strong> 次破解了密码。继续挑战能更快建立题感。正确答案：`
-    : `${resultLabel}<br>${winnerText}在${MAX_GUESSES}次内未能破解。再来一局能帮助你熟悉排除思路。正确答案：`;
+    : `${resultLabel}<br>${winnerText}在${GameState.activeConfig.maxGuesses}次内未能破解。再来一局能帮助你熟悉排除思路。正确答案：`;
   document.getElementById('overlayStats').textContent = '';
 
   const finalRow = document.getElementById('answerFinal');
@@ -339,6 +313,9 @@ export function applyModeLabels(mode, variant = 'classic', challengeKey = null) 
   if (mode === 'single' && variant === 'daily') {
     setupTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
     guessTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
+  } else if (mode === 'single' && variant === 'duplicates') {
+    setupTitle.textContent = '重复色模式 · 电脑已生成密码';
+    guessTitle.textContent = '重复色模式 · 允许重复颜色';
   } else if (mode === 'single') {
     setupTitle.textContent = '单人模式 · 电脑已生成密码';
     guessTitle.textContent = '单人模式 · 你来猜测';

@@ -78,15 +78,23 @@
             </div>
           </div>
           <div class="mode-actions">
-            <div class="mode-option mode-option--primary">
-              <button class="btn btn-primary" id="btnModeSingle" type="button">单人经典</button>
-              <p class="mode-option__meta">随时开一局，适合练习推理节奏和试错。</p>
-            </div>
-            <div class="mode-option">
-              <button class="btn btn-secondary" id="btnModeDaily" type="button">每日挑战</button>
+            <div class="mode-option mode-option--daily">
+              <span class="mode-option__tag">今日目标</span>
+              <button class="btn btn-primary" id="btnModeDaily" type="button">每日挑战</button>
               <p class="mode-option__meta" id="dailyModeMeta">今日题目加载中</p>
             </div>
-            <div class="mode-option">
+            <div class="mode-option mode-option--classic">
+              <span class="mode-option__tag">练手首选</span>
+              <button class="btn btn-secondary" id="btnModeSingle" type="button">单人经典</button>
+              <p class="mode-option__meta">随时开一局，适合练习推理节奏和试错。</p>
+            </div>
+            <div class="mode-option mode-option--variant">
+              <span class="mode-option__tag">进阶变体</span>
+              <button class="btn btn-secondary" id="btnModeDuplicates" type="button">重复色模式</button>
+              <p class="mode-option__meta">允许重复颜色，推理方式会明显不同。</p>
+            </div>
+            <div class="mode-option mode-option--dual">
+              <span class="mode-option__tag">双人对战</span>
               <button class="btn btn-secondary" id="btnModeDual" type="button">双人对战</button>
               <p class="mode-option__meta">一人出题一人破解，适合当面轮流挑战。</p>
             </div>
@@ -127,11 +135,7 @@
       <div class="screen" id="screenGuess">
         <div class="card">
           <div class="card-title" id="guessTitle">玩家二 · 猜测颜色</div>
-          <div class="mobile-current-guess">
-            <div class="mobile-current-guess__label">当前猜测</div>
-            <div class="secret-row mobile-current-guess__row" id="mobileGuessRow"></div>
-            <p class="text-small mobile-current-guess__hint">点击槽位切换位置，点击已选颜色可移除</p>
-          </div>
+          <p class="text-small text-center">直接点击猜测记录中的当前行，切换要填入的位置。</p>
           <div class="palette" id="guessPalette"></div>
 
         </div>
