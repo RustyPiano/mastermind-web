@@ -1,5 +1,7 @@
 import { FEEDBACK } from './engine.js';
 
+const SITE_URL = 'https://mastermind.rustypiano.com/';
+
 export function feedbackToEmoji(value) {
   if (value === FEEDBACK.EXACT) return '🟢';
   if (value === FEEDBACK.MISPLACED) return '🟠';
@@ -26,6 +28,7 @@ export function buildShareText(result) {
     buildTitle(result),
     `${score}/${result.maxGuesses}`,
     ...rows,
+    SITE_URL,
   ].join('\n');
 }
 

@@ -99,6 +99,26 @@
   min-width: 240px;
 }
 
+@media (min-width: 960px) {
+  .main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    align-items: start;
+    max-width: 1180px;
+  }
+
+  .board {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .side-panel {
+    width: 360px;
+    min-width: 360px;
+  }
+}
+
 .palette {
   --palette-ball-size: var(--ball-md);
   --palette-row-width: 196px;

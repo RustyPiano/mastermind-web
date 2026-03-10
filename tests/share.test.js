@@ -32,6 +32,7 @@ describe('buildShareText', () => {
       '🟢🟠⚪⚪',
       '🟢🟢🟠⚪',
       '🟢🟢🟢🟢',
+      'https://mastermind.rustypiano.com/',
     ].join('\n'));
   });
 
@@ -50,6 +51,7 @@ describe('buildShareText', () => {
       '密码机 单人经典',
       'X/10',
       '🟢⚪⚪⚪',
+      'https://mastermind.rustypiano.com/',
     ].join('\n'));
   });
 
