@@ -1,4 +1,4 @@
-import { MAX_GUESSES, CODE_LENGTH } from './constants.js';
+import { COLORS, MAX_GUESSES, CODE_LENGTH } from './constants.js';
 import { GameState } from './state.js';
 import {
   buildBoard,
@@ -15,6 +15,7 @@ import {
   renderFeedback,
   showResult,
   hideOverlay,
+  applyModeLabels,
   showScreen,
 } from './ui.js';
 
@@ -83,6 +84,24 @@ function startGuessing() {
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
   updateStatus('请选择4个颜色提交猜测');
+}
+
+function startSingleMode() {
+  GameState.reset();
+  GameState.setMode('single');
+  GameState.generateRandomSecret(COLORS.map(c => c.id));
+  applyModeLabels('single');
+  buildBoard();
+  startGuessing();
+}
+
+function startDualMode() {
+  GameState.reset();
+  GameState.setMode('dual');
+  applyModeLabels('dual');
+  buildBoard();
+  showScreen('screenSetup');
+  refreshSetupUI();
 }
 
 /* ============================================
@@ -161,8 +180,9 @@ function submitGuess() {
 
 function resetGame() {
   GameState.reset();
+  applyModeLabels('dual');
   hideOverlay();
-  showScreen('screenSetup');
+  showScreen('screenMode');
   refreshSetupUI();
   buildBoard();
 }
@@ -172,6 +192,12 @@ function resetGame() {
    ============================================ */
 
 function bindEvents() {
+  document.getElementById('btnModeSingle')
+    .addEventListener('click', startSingleMode);
+
+  document.getElementById('btnModeDual')
+    .addEventListener('click', startDualMode);
+
   document.getElementById('btnConfirmSecret')
     .addEventListener('click', confirmSecret);
 
@@ -194,8 +220,10 @@ function bindEvents() {
 
 function init() {
   bindEvents();
+  applyModeLabels('dual');
   buildBoard();
   refreshSetupUI();
+  showScreen('screenMode');
 }
 
 init();

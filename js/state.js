@@ -5,12 +5,27 @@ function createEmptySlots() {
 }
 
 export const GameState = {
+  mode: 'dual',
   secretCode: createEmptySlots(),
   currentGuess: createEmptySlots(),
   guessHistory: [],
 
   setupActiveSlot: 0,
   guessActiveSlot: 0,
+
+  setMode(mode) {
+    this.mode = mode;
+  },
+
+  generateRandomSecret(colors) {
+    const pool = [...colors];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    this.secretCode = pool.slice(0, CODE_LENGTH);
+    this.setupActiveSlot = 0;
+  },
 
   /* ---- Secret Code (Setup) ---- */
 
@@ -107,6 +122,7 @@ export const GameState = {
   /* ---- Reset ---- */
 
   reset() {
+    this.mode = 'dual';
     this.secretCode = createEmptySlots();
     this.currentGuess = createEmptySlots();
     this.guessHistory = [];

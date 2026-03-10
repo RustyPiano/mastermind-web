@@ -5,7 +5,7 @@ export const COLORS = [
   { id: 'c4', name: '绿', bg: '#32d74b' },
   { id: 'c5', name: '蓝', bg: '#0a84ff' },
   { id: 'c6', name: '紫', bg: '#bf5af2' },
-  { id: 'c7', name: '粉', bg: '#ff375f' },
+  { id: 'c7', name: '白', bg: '#ffffff' },
 ];
 
 export const MAX_GUESSES = 10;

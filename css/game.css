@@ -30,17 +30,20 @@
   display: flex;
   flex-direction: column-reverse;
   gap: var(--space-sm);
+  align-items: center;
 }
 
 .guess-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-md);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   transition: all var(--transition-base);
   position: relative;
+  width: fit-content;
 }
 
 .guess-row.active {
@@ -97,11 +100,26 @@
 }
 
 .palette {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, var(--ball-md));
   gap: 12px;
   justify-content: center;
+  justify-items: center;
   margin-top: var(--space-sm);
+}
+
+.palette > .ball:nth-child(1) { grid-column: 2; grid-row: 1; }
+.palette > .ball:nth-child(2) { grid-column: 3; grid-row: 1; }
+.palette > .ball:nth-child(3) { grid-column: 4; grid-row: 1; }
+.palette > .ball:nth-child(4) { grid-column: 5; grid-row: 1; }
+.palette > .ball:nth-child(5) { grid-column: 2; grid-row: 2; }
+.palette > .ball:nth-child(6) { grid-column: 3; grid-row: 2; }
+.palette > .ball:nth-child(7) { grid-column: 4; grid-row: 2; }
+
+@media (max-width: 360px) {
+  .palette {
+    grid-template-columns: repeat(6, 28px);
+  }
 }
 
 .secret-row {

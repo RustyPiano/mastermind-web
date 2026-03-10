@@ -240,6 +240,20 @@ export function hideOverlay() {
   document.getElementById('overlay').classList.remove('show');
 }
 
+export function applyModeLabels(mode) {
+  const setupTitle = document.getElementById('setupTitle');
+  const guessTitle = document.getElementById('guessTitle');
+  if (!setupTitle || !guessTitle) return;
+
+  if (mode === 'single') {
+    setupTitle.textContent = '单人模式 · 电脑已生成密码';
+    guessTitle.textContent = '单人模式 · 你来猜测';
+  } else {
+    setupTitle.textContent = '玩家一 · 设置密码';
+    guessTitle.textContent = '玩家二 · 猜测颜色';
+  }
+}
+
 /* ---- Screen Switching ---- */
 
 export function showScreen(screenId) {

@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="密码机 - 在线双人猜色解码游戏，灵感来自 GiiKER 计客超级密码机。从7种颜色中设置4位密码，挑战你的逻辑推理能力！">
+  <meta name="description" content="密码机 - 在线单人/双人猜色解码游戏，灵感来自 GiiKER 计客超级密码机。从7种颜色中设置4位密码，挑战你的逻辑推理能力！">
   <meta name="keywords" content="密码机,Mastermind,猜色游戏,GiiKER,计客,解谜游戏,逻辑推理">
   <meta name="author" content="密码机">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="theme-color" content="#121212">
 
   <!-- Open Graph -->
   <meta property="og:title" content="密码机 · MASTERMIND">
-  <meta property="og:description" content="在线双人猜色解码游戏，挑战你的逻辑推理能力！">
+  <meta property="og:description" content="在线单人/双人猜色解码游戏，挑战你的逻辑推理能力！">
   <meta property="og:type" content="website">
 
   <title>密码机 · MASTERMIND</title>
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
@@ -40,10 +39,22 @@
     <!-- Side Panel: Setup / Transition / Guess -->
     <aside class="side-panel" aria-label="操作面板">
 
+      <!-- Screen 0: Mode Selection -->
+      <div class="screen active" id="screenMode">
+        <div class="card text-center">
+          <div class="card-title">选择模式</div>
+          <p class="text-hint">选择单人或双人开始游戏</p>
+          <div class="mode-actions">
+            <button class="btn btn-primary" id="btnModeSingle" type="button">单人模式</button>
+            <button class="btn btn-secondary" id="btnModeDual" type="button">双人模式</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Screen 1: Setup -->
-      <div class="screen active" id="screenSetup">
+      <div class="screen" id="screenSetup">
         <div class="card">
-          <div class="card-title">玩家一 · 设置密码</div>
+          <div class="card-title" id="setupTitle">玩家一 · 设置密码</div>
           <p class="text-hint">
             从7色中选 <strong>4种不同颜色</strong>，顺序即密码
           </p>
@@ -70,7 +81,7 @@
       <!-- Screen 3: Guessing -->
       <div class="screen" id="screenGuess">
         <div class="card">
-          <div class="card-title">玩家二 · 猜测颜色</div>
+          <div class="card-title" id="guessTitle">玩家二 · 猜测颜色</div>
           <div class="palette" id="guessPalette"></div>
           <div class="selected-count">已选：<span id="selectedCount">0</span>/4</div>
         </div>
@@ -116,7 +127,7 @@
   </div>
 
   <noscript>
-    <p style="color:#e0dff5;text-align:center;padding:40px;">
+    <p style="color:#f5f5f7;text-align:center;padding:40px;">
       本游戏需要启用 JavaScript 才能运行。请在浏览器设置中开启 JavaScript。
     </p>
   </noscript>
