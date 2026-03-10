@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildShareText, buildChallengeUrl } from '../js/share.js';
+import { buildShareText, buildChallengeUrl, parseChallengePayload } from '../js/share.js';
 import { FEEDBACK } from '../js/engine.js';
 
 describe('buildChallengeUrl', () => {
@@ -11,32 +11,60 @@ describe('buildChallengeUrl', () => {
         expect(url.startsWith(baseUrl)).toBe(true);
     });
 
-    it('produces a decodable payload that round-trips correctly', () => {
+    it('produces a decodable classic payload that round-trips correctly', () => {
         const secret = ['c3', 'c5', 'c1', 'c7'];
         const url = buildChallengeUrl(secret, baseUrl);
         const encoded = url.split('?challenge=')[1];
         const decoded = JSON.parse(atob(encoded));
-        expect(decoded.s).toEqual(secret);
+        expect(decoded).toEqual({
+            v: 1,
+            m: 'classic',
+            s: secret,
+        });
+        expect(parseChallengePayload(encoded)).toEqual({
+            secretCode: secret,
+            variant: 'classic',
+        });
     });
 
     it('strips existing query params from the base URL', () => {
-        const url = buildChallengeUrl(['c1', 'c2'], 'https://example.com/?foo=bar');
+        const url = buildChallengeUrl(['c1', 'c2', 'c3', 'c4'], 'https://example.com/?foo=bar');
         expect(url).toMatch(/^https:\/\/example\.com\/\?challenge=/);
         expect(url).not.toContain('foo=bar');
     });
 
     it('strips existing hash from the base URL', () => {
-        const url = buildChallengeUrl(['c1', 'c2'], 'https://example.com/#section');
+        const url = buildChallengeUrl(['c1', 'c2', 'c3', 'c4'], 'https://example.com/#section');
         expect(url).toMatch(/^https:\/\/example\.com\/\?challenge=/);
         expect(url).not.toContain('#section');
     });
 
-    it('handles 5-slot secrets (hard/expert mode)', () => {
+    it('supports 5-slot challenge payloads when the variant is provided', () => {
         const secret = ['c1', 'c2', 'c3', 'c4', 'c5'];
-        const url = buildChallengeUrl(secret, baseUrl);
+        const url = buildChallengeUrl(secret, baseUrl, { variant: 'hard' });
         const encoded = url.split('?challenge=')[1];
-        const decoded = JSON.parse(atob(encoded));
-        expect(decoded.s).toEqual(secret);
+        expect(parseChallengePayload(encoded)).toEqual({
+            secretCode: secret,
+            variant: 'hard',
+        });
+    });
+
+    it('keeps backward compatibility with old classic payloads', () => {
+        const encoded = btoa(JSON.stringify({ s: ['c1', 'c2', 'c3', 'c4'] }));
+
+        expect(parseChallengePayload(encoded)).toEqual({
+            secretCode: ['c1', 'c2', 'c3', 'c4'],
+            variant: 'classic',
+        });
+    });
+
+    it('rejects invalid or incompatible challenge payloads', () => {
+        const invalidClassicLength = btoa(JSON.stringify({ s: ['c1', 'c2', 'c3', 'c4', 'c5'] }));
+        const invalidVariant = btoa(JSON.stringify({ v: 1, m: 'daily', s: ['c1', 'c2', 'c3', 'c4'] }));
+
+        expect(parseChallengePayload('not-base64')).toBeNull();
+        expect(parseChallengePayload(invalidClassicLength)).toBeNull();
+        expect(parseChallengePayload(invalidVariant)).toBeNull();
     });
 });
 

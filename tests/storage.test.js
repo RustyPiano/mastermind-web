@@ -40,6 +40,8 @@ function makeSession() {
     variant: 'classic',
     startedAt: '2026-03-10T08:00:00.000Z',
     challengeKey: null,
+    isChallenge: false,
+    challengeUrl: null,
     secretCode: ['c1', 'c2', 'c3', 'c4'],
     currentGuess: ['c1', null, null, null],
     guessHistory: [
@@ -82,6 +84,8 @@ describe('storage helpers', () => {
     expect(GameState.variant).toBe(session.variant);
     expect(GameState.startedAt).toBe(session.startedAt);
     expect(GameState.challengeKey).toBeNull();
+    expect(GameState.isChallenge).toBe(false);
+    expect(GameState.challengeUrl).toBeNull();
     expect(GameState.secretCode).toEqual(session.secretCode);
     expect(GameState.currentGuess).toEqual(session.currentGuess);
     expect(GameState.guessHistory).toEqual(session.guessHistory);
@@ -109,6 +113,33 @@ describe('storage helpers', () => {
     expect(GameState.currentGuess).toEqual(['c1', 'c2', 'c3', 'c4', null]);
     expect(GameState.guessHistory[0].feedback).toHaveLength(5);
     expect(GameState.guessHistory[0].feedback[4]).toBe('none');
+  });
+
+  it('preserves challenge-specific fields through snapshot and restore', () => {
+    const session = {
+      ...makeSession(),
+      mode: 'dual',
+      variant: 'hard',
+      isChallenge: true,
+      challengeUrl: 'https://mastermind.rustypiano.com/?challenge=abc123',
+      secretCode: ['c1', 'c2', 'c3', 'c4', 'c5'],
+      currentGuess: ['c1', 'c2', null, null, null],
+      guessHistory: [],
+    };
+
+    GameState.restore(session);
+    const snapshot = createSessionSnapshot(GameState);
+
+    expect(snapshot.isChallenge).toBe(true);
+    expect(snapshot.challengeUrl).toBe(session.challengeUrl);
+
+    GameState.reset();
+    expect(GameState.isChallenge).toBe(false);
+    expect(GameState.challengeUrl).toBeNull();
+
+    GameState.restore(snapshot);
+    expect(GameState.isChallenge).toBe(true);
+    expect(GameState.challengeUrl).toBe(session.challengeUrl);
   });
 
   it('returns null and clears malformed saved session payloads', () => {

@@ -41,6 +41,8 @@ function isValidSessionShape(data) {
     && typeof data.variant === 'string'
     && (typeof data.startedAt === 'string' || data.startedAt === null)
     && (typeof data.challengeKey === 'string' || data.challengeKey === null)
+    && typeof data.isChallenge === 'boolean'
+    && (typeof data.challengeUrl === 'string' || data.challengeUrl === null)
     && Array.isArray(data.secretCode)
     && Array.isArray(data.currentGuess)
     && Array.isArray(data.guessHistory)
@@ -90,6 +92,8 @@ export function createSessionSnapshot(state) {
     variant: state.variant,
     startedAt: state.startedAt,
     challengeKey: state.challengeKey ?? null,
+    isChallenge: Boolean(state.isChallenge),
+    challengeUrl: state.challengeUrl ?? null,
     secretCode: cloneSlots(state.secretCode),
     currentGuess: cloneSlots(state.currentGuess),
     guessHistory: cloneHistory(state.guessHistory),
@@ -108,6 +112,8 @@ export function saveSession(session) {
   saveStorageItem(SESSION_STORAGE_KEY, {
     ...session,
     challengeKey: session.challengeKey ?? null,
+    isChallenge: Boolean(session.isChallenge),
+    challengeUrl: session.challengeUrl ?? null,
     version: STORAGE_VERSION,
   });
 }

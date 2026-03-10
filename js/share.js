@@ -1,7 +1,10 @@
 import { FEEDBACK } from './engine.js';
-import { getModeConfig } from './mode-config.js';
+import { getAvailableColors } from './constants.js';
+import { getModeConfig, MODE_CONFIGS } from './mode-config.js';
 
 const SITE_URL = 'https://mastermind.rustypiano.com/';
+const CHALLENGE_PAYLOAD_VERSION = 1;
+const DEFAULT_CHALLENGE_VARIANT = 'classic';
 
 export function feedbackToEmoji(value) {
   if (value === FEEDBACK.EXACT) return '🟢';
@@ -42,13 +45,88 @@ export function buildShareText(result) {
   ].join('\n');
 }
 
-export function buildChallengeUrl(secretCode, currentSiteUrl = window.location.href) {
+function isSupportedChallengeVariant(variant) {
+  return variant !== 'daily' && Boolean(MODE_CONFIGS[variant]);
+}
+
+function isValidSecretForVariant(secretCode, variant) {
+  if (!Array.isArray(secretCode) || secretCode.length === 0) {
+    return false;
+  }
+
+  if (!isSupportedChallengeVariant(variant)) {
+    return false;
+  }
+
+  const config = getModeConfig(variant);
+  const allowedColors = new Set(
+    getAvailableColors(config.paletteColorCount).map((color) => color.id),
+  );
+
+  if (secretCode.length !== config.codeLength) {
+    return false;
+  }
+
+  if (secretCode.some((colorId) => typeof colorId !== 'string' || !allowedColors.has(colorId))) {
+    return false;
+  }
+
+  if (!config.allowDuplicates && new Set(secretCode).size !== secretCode.length) {
+    return false;
+  }
+
+  return true;
+}
+
+export function parseChallengePayload(challengeParam) {
+  if (!challengeParam) {
+    return null;
+  }
+
+  try {
+    const decoded = JSON.parse(atob(challengeParam));
+    if (!decoded || !Array.isArray(decoded.s)) {
+      return null;
+    }
+
+    if (decoded.v === undefined && isValidSecretForVariant(decoded.s, DEFAULT_CHALLENGE_VARIANT)) {
+      return {
+        secretCode: [...decoded.s],
+        variant: DEFAULT_CHALLENGE_VARIANT,
+      };
+    }
+
+    if (decoded.v !== CHALLENGE_PAYLOAD_VERSION || typeof decoded.m !== 'string') {
+      return null;
+    }
+
+    if (!isValidSecretForVariant(decoded.s, decoded.m)) {
+      return null;
+    }
+
+    return {
+      secretCode: [...decoded.s],
+      variant: decoded.m,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function buildChallengeUrl(secretCode, currentSiteUrl = window.location.href, options = {}) {
   // Extract base URL without query params or hashes
   const baseUrl = currentSiteUrl.split(/[?#]/)[0];
+  const variant = options.variant ?? DEFAULT_CHALLENGE_VARIANT;
 
-  // Create a minimal payload with just the color IDs array
-  // We can compress this further if needed, but JSON over base64 is fine for 4-5 items
-  const payload = JSON.stringify({ s: secretCode });
+  if (!isValidSecretForVariant(secretCode, variant)) {
+    throw new Error('Invalid challenge payload');
+  }
+
+  const payload = JSON.stringify({
+    v: CHALLENGE_PAYLOAD_VERSION,
+    m: variant,
+    s: secretCode,
+  });
 
   // Use btoa to create a base64 encoded string
   // Note: For unicode safely we should technically use encodeURIComponent, 

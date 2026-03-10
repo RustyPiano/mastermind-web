@@ -15,6 +15,8 @@ import {
   saveStats,
 } from './storage.js';
 import { shareResult, buildChallengeUrl } from './share.js';
+import { parseChallengePayload } from './share.js';
+import { buildFinishedResult } from './result.js';
 import {
   buildBoard,
   buildSecretRow,
@@ -125,29 +127,14 @@ function toggleStatsPanel() {
 }
 
 function recordFinishedGame({ win, rounds }) {
+  const finishedResult = buildFinishedResult(GameState, { win, rounds });
   const nextStats = recordGameResult(loadStats(), {
-    mode: GameState.mode,
-    variant: GameState.variant,
-    challengeKey: GameState.challengeKey,
-    rounds,
-    win,
+    ...finishedResult,
     finishedAt: new Date().toISOString(),
   });
 
   saveStats(nextStats);
-  latestResult = {
-    mode: GameState.mode,
-    variant: GameState.variant,
-    challengeKey: GameState.challengeKey,
-    isChallenge: GameState.isChallenge,
-    challengeUrl: GameState.challengeUrl,
-    rounds,
-    win,
-    history: GameState.guessHistory.map((entry) => ({
-      feedback: [...entry.feedback],
-    })),
-    maxGuesses: GameState.activeConfig.maxGuesses,
-  };
+  latestResult = finishedResult;
 }
 
 async function handleShareResult() {
@@ -227,7 +214,9 @@ function confirmSecret() {
 async function generateChallenge() {
   if (!GameState.isSecretComplete()) return;
 
-  const url = buildChallengeUrl(GameState.secretCode);
+  const url = buildChallengeUrl(GameState.secretCode, undefined, {
+    variant: GameState.variant,
+  });
   try {
     if (navigator?.share) {
       await navigator.share({
@@ -329,20 +318,21 @@ function startDualMode() {
   refreshSetupUI();
 }
 
-function startChallengeMode(secretCode) {
+function startChallengeMode({ secretCode, variant, challengeUrl }) {
+  const config = getModeConfig(variant);
+
   GameState.reset();
   GameState.setMode('dual');
-  GameState.setVariant(DEFAULT_MODE_ID);
-  GameState.setActiveConfig(getModeConfig(DEFAULT_MODE_ID));
+  GameState.setVariant(variant);
+  GameState.setActiveConfig(config);
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
 
-  // Set the specific challenge properties string bypass
   GameState.secretCode = [...secretCode];
   GameState.isChallenge = true;
-  GameState.challengeUrl = window.location.href; // Keep the original URL for sharing later
+  GameState.challengeUrl = challengeUrl;
 
-  applyModeLabels('dual', 'classic'); // We can reuse dual labels for the guess phase
+  applyModeLabels('dual', variant);
   buildBoard();
   scheduleSave();
   startGuessing();
@@ -573,17 +563,20 @@ function init() {
   const challengeParam = params.get('challenge');
 
   if (challengeParam) {
-    try {
-      const decoded = JSON.parse(atob(challengeParam));
-      if (decoded && Array.isArray(decoded.s) && decoded.s.length > 0) {
-        // Clear the param from URL without refreshing so it doesn't stay there if they replay
-        window.history.replaceState({}, document.title, window.location.pathname);
-        startChallengeMode(decoded.s);
-        return;
-      }
-    } catch (err) {
-      console.warn('Failed to parse challenge parameter');
+    const challengeUrl = window.location.href;
+    const payload = parseChallengePayload(challengeParam);
+
+    if (payload) {
+      // Clear the param from URL without refreshing so it doesn't stay there if they replay
+      window.history.replaceState({}, document.title, window.location.pathname);
+      startChallengeMode({
+        ...payload,
+        challengeUrl,
+      });
+      return;
     }
+
+    console.warn('Failed to parse challenge parameter');
   }
 
   const savedSession = loadSession();
