@@ -284,8 +284,8 @@ export function showResult(win, rounds) {
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
   document.getElementById('overlaySub').innerHTML = win
-    ? `${resultLabel}<br>${winnerText}用了 <strong>${rounds}</strong> 次破解了密码！正确答案：`
-    : `${resultLabel}<br>${winnerText}在${MAX_GUESSES}次内未能破解。正确答案：`;
+    ? `${resultLabel}<br>${winnerText}用了 <strong>${rounds}</strong> 次破解了密码。继续挑战能更快建立题感。正确答案：`
+    : `${resultLabel}<br>${winnerText}在${MAX_GUESSES}次内未能破解。再来一局能帮助你熟悉排除思路。正确答案：`;
   document.getElementById('overlayStats').textContent = '';
 
   const finalRow = document.getElementById('answerFinal');
@@ -300,6 +300,28 @@ export function showResult(win, rounds) {
 
 export function hideOverlay() {
   document.getElementById('overlay').classList.remove('show');
+}
+
+export function setOnboardingVisibility(visible) {
+  const card = document.getElementById('onboardingCard');
+  if (!card) return;
+
+  card.hidden = !visible;
+}
+
+export function setLegendVisibility(visible) {
+  const sheet = document.getElementById('legendSheet');
+  const button = document.getElementById('btnOpenLegend');
+  if (!sheet || !button) return;
+
+  sheet.hidden = !visible;
+  sheet.classList.toggle('legend-sheet--open', visible);
+  button.setAttribute('aria-expanded', visible ? 'true' : 'false');
+}
+
+export function isLegendVisible() {
+  const sheet = document.getElementById('legendSheet');
+  return Boolean(sheet && !sheet.hidden);
 }
 
 export function setShareButtonEnabled(enabled) {
@@ -333,14 +355,14 @@ export function updateDailyModeEntry({ challengeKey, isCompleted, hasActiveSessi
 
   if (hasActiveSession) {
     button.textContent = '继续每日挑战';
-    meta.textContent = `继续 ${challengeKey} 的进度`;
+    meta.textContent = `继续 ${challengeKey} 的进度，保住你的每日连胜。`;
     return;
   }
 
   button.textContent = '每日挑战';
   meta.textContent = isCompleted
-    ? `${challengeKey} 已完成 ✓`
-    : `${challengeKey} 今日题目`;
+    ? `${challengeKey} 已完成 ✓，明天继续冲击连胜。`
+    : `${challengeKey} 今日题目，通关后会记入每日连胜。`;
 }
 
 export function renderStatsPanel(stats) {

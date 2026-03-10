@@ -3,7 +3,16 @@ import { GameState } from './state.js';
 import { calcFeedback, FEEDBACK, isWinningFeedback } from './engine.js';
 import { dateToChallengeKey, generateDailySecret, isDailySessionForKey } from './daily.js';
 import { hasCompletedDaily, recordGameResult } from './stats.js';
-import { clearSession, createSessionSnapshot, loadSession, loadStats, saveSession, saveStats } from './storage.js';
+import {
+  clearSession,
+  createSessionSnapshot,
+  loadPreferences,
+  loadSession,
+  loadStats,
+  savePreferences,
+  saveSession,
+  saveStats,
+} from './storage.js';
 import { shareResult } from './share.js';
 import {
   buildBoard,
@@ -26,6 +35,9 @@ import {
   renderStatsPanel,
   renderResultStats,
   setShareButtonEnabled,
+  setLegendVisibility,
+  isLegendVisible,
+  setOnboardingVisibility,
 } from './ui.js';
 
 let saveScheduled = false;
@@ -60,6 +72,11 @@ function getGuessStatusMessage() {
   return `${prefix}请选择4个颜色提交猜测`;
 }
 
+function getRoundSummaryMessage(roundNumber, exactCount, misplacedCount) {
+  const remaining = MAX_GUESSES - roundNumber;
+  return `第 ${roundNumber} 轮：${exactCount} 个位置正确，${misplacedCount} 个颜色正确但位置错误。还剩 ${remaining} 次机会。`;
+}
+
 function getTodayChallengeKey() {
   return dateToChallengeKey(new Date(), challengeTimeZone);
 }
@@ -75,6 +92,18 @@ function refreshModeSelectionMeta() {
     hasActiveSession: isDailySessionForKey(savedSession, challengeKey),
   });
   renderStatsPanel(stats);
+}
+
+function dismissOnboarding() {
+  savePreferences({
+    ...loadPreferences(),
+    firstRunDismissed: true,
+  });
+  setOnboardingVisibility(false);
+}
+
+function toggleLegend() {
+  setLegendVisibility(!isLegendVisible());
 }
 
 function recordFinishedGame({ win, rounds }) {
@@ -177,6 +206,7 @@ function confirmSecret() {
 
 function startGuessing() {
   setCurrentScreen('screenGuess');
+  setLegendVisibility(false);
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick);
   updateStatus(getGuessStatusMessage());
@@ -311,7 +341,7 @@ function submitGuess() {
   GameState.clearGuess();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick); // Initialize new row
-  updateStatus(`第${r + 1}轮：🟢 ${exactCount}个正确 🟠 ${misplacedCount}个位置错 — 继续！`);
+  updateStatus(getRoundSummaryMessage(r + 1, exactCount, misplacedCount));
   highlightActiveRow();
   scheduleSave();
 }
@@ -327,6 +357,7 @@ function resetGame() {
   applyModeLabels('dual', 'classic');
   hideOverlay();
   setShareButtonEnabled(false);
+  setLegendVisibility(false);
   setCurrentScreen('screenMode');
   refreshSetupUI();
   buildBoard();
@@ -386,6 +417,23 @@ function bindEvents() {
       void handleShareResult();
     });
 
+  document.getElementById('btnDismissOnboarding')
+    .addEventListener('click', dismissOnboarding);
+
+  document.getElementById('btnOpenLegend')
+    .addEventListener('click', toggleLegend);
+
+  document.getElementById('btnCloseLegend')
+    .addEventListener('click', () => {
+      setLegendVisibility(false);
+    });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      setLegendVisibility(false);
+    }
+  });
+
   document.getElementById('btnPlayAgain')
     .addEventListener('click', replayGame);
 }
@@ -396,6 +444,8 @@ function bindEvents() {
 
 function init() {
   bindEvents();
+  setOnboardingVisibility(!loadPreferences().firstRunDismissed);
+  setLegendVisibility(false);
   const savedSession = loadSession();
 
   if (savedSession) {

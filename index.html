@@ -43,7 +43,18 @@
       <div class="screen active" id="screenMode">
         <div class="card text-center">
           <div class="card-title">选择模式</div>
-          <p class="text-hint">选择单人或双人开始游戏</p>
+          <p class="text-hint">经典模式适合练手；每日挑战会记录你当天是否通关和每日连胜。</p>
+          <div class="onboarding-card" id="onboardingCard" hidden>
+            <div class="onboarding-card__head">
+              <strong>第一次玩先看这里</strong>
+              <button class="onboarding-card__close" id="btnDismissOnboarding" type="button" aria-label="关闭新手说明">×</button>
+            </div>
+            <p class="onboarding-card__copy">目标是在 10 次内猜中 4 个颜色组成的密码。经典和每日模式都不允许重复色。</p>
+            <div class="onboarding-card__legend">
+              <span>🟢 颜色和位置都正确</span>
+              <span>🟠 颜色正确但位置错误</span>
+            </div>
+          </div>
           <div class="stats-panel" id="statsPanel" aria-live="polite">
             <div class="stats-panel__item">
               <span class="stats-panel__label">总场次</span>
@@ -61,7 +72,7 @@
               <span class="stats-panel__label">最佳每日连胜</span>
               <strong class="stats-panel__value" id="statsBestDailyStreak">0</strong>
             </div>
-            <div class="stats-panel__item">
+            <div class="stats-panel__item stats-panel__item--wide">
               <span class="stats-panel__label">经典最佳</span>
               <strong class="stats-panel__value" id="statsBestClassic">-</strong>
             </div>
@@ -69,6 +80,7 @@
           <div class="mode-actions">
             <div class="mode-option mode-option--primary">
               <button class="btn btn-primary" id="btnModeSingle" type="button">单人经典</button>
+              <p class="mode-option__meta">随时开一局，适合练习推理节奏和试错。</p>
             </div>
             <div class="mode-option">
               <button class="btn btn-secondary" id="btnModeDaily" type="button">每日挑战</button>
@@ -76,6 +88,7 @@
             </div>
             <div class="mode-option">
               <button class="btn btn-secondary" id="btnModeDual" type="button">双人对战</button>
+              <p class="mode-option__meta">一人出题一人破解，适合当面轮流挑战。</p>
             </div>
           </div>
         </div>
@@ -123,17 +136,22 @@
 
         </div>
 
-        <div class="status-box" id="statusBox" aria-live="polite">请选择4个颜色提交猜测</div>
+        <div class="status-row">
+          <div class="status-box" id="statusBox" aria-live="polite">请选择4个颜色提交猜测</div>
+          <button class="help-link" id="btnOpenLegend" type="button" aria-expanded="false" aria-controls="legendSheet">反馈说明</button>
+        </div>
 
         <div class="btn-row">
           <button class="btn btn-secondary" id="btnClear" type="button">清除</button>
           <button class="btn btn-primary" id="btnSubmit" type="button" disabled>提交猜测</button>
         </div>
-
         <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
 
-        <div class="card">
-          <div class="card-title">反馈说明</div>
+        <div class="legend-sheet" id="legendSheet" hidden>
+          <div class="legend-sheet__head">
+            <div class="card-title">反馈说明</div>
+            <button class="legend-sheet__close" id="btnCloseLegend" type="button" aria-label="关闭反馈说明">×</button>
+          </div>
           <div class="legend">
             <div class="legend-item">
               <div class="legend-dot legend-dot--correct"></div>
@@ -148,6 +166,7 @@
               颜色不在密码中
             </div>
           </div>
+          <p class="text-small legend-sheet__copy">每轮结束后先看 🟢 数量，再根据 🟠 调整颜色位置。</p>
         </div>
       </div>
 

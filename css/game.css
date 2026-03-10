@@ -409,9 +409,17 @@
     padding: 10px 12px;
   }
 
-  /* 隐藏反馈说明卡片，节省空间 */
-  body.game-phase--guessing #screenGuess .card:last-child {
-    display: none;
+  body.game-phase--guessing .status-row {
+    gap: 8px;
+  }
+
+  body.game-phase--guessing .help-link {
+    padding-top: 8px;
+    font-size: 11px;
+  }
+
+  body.game-phase--guessing .legend-sheet {
+    padding: 14px;
   }
 }
 
