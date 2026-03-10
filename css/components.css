@@ -79,11 +79,11 @@
 .status-box {
   background: var(--bg-subtle);
   border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 10px 12px;
   font-size: var(--text-sm);
   text-align: center;
-  line-height: 1.6;
-  min-height: 52px;
+  line-height: 1.4;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,6 +304,7 @@
 .overlay-actions {
   display: flex;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .overlay {
@@ -381,7 +382,7 @@
 }
 
 .overlay-actions .btn-primary {
-  flex: 1.2;
+  flex: 1 0 100%;
 }
 
 .legend {
@@ -401,6 +402,11 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+.guess-helper {
+  margin: -4px 0 2px;
+  color: var(--text-muted);
 }
 
 .legend-sheet {

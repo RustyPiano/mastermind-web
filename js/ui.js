@@ -254,12 +254,28 @@ export function showResult(win, rounds) {
     : GameState.mode === 'single'
       ? modeLabel
       : '双人对战';
+  const roundText = rounds ? `<strong>${rounds}</strong> 次` : `${GameState.activeConfig.maxGuesses} 次`;
+  let summaryText = '';
+
+  if (win) {
+    if (GameState.variant === 'daily') {
+      summaryText = `${winnerText}用了 ${roundText} 完成今天这题。`;
+    } else if (GameState.variant === 'duplicates') {
+      summaryText = `${winnerText}用了 ${roundText} 破解重复色规则。`;
+    } else {
+      summaryText = `${winnerText}用了 ${roundText} 破解了密码。`;
+    }
+  } else if (GameState.variant === 'daily') {
+    summaryText = `${winnerText}没能在 ${roundText} 内完成今天这题。`;
+  } else if (GameState.variant === 'duplicates') {
+    summaryText = `${winnerText}没能在 ${roundText} 内破解重复色规则。`;
+  } else {
+    summaryText = `${winnerText}没能在 ${roundText} 内破解密码。`;
+  }
 
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
-  document.getElementById('overlaySub').innerHTML = win
-    ? `${resultLabel}<br>${winnerText}用了 <strong>${rounds}</strong> 次破解了密码。继续挑战能更快建立题感。正确答案：`
-    : `${resultLabel}<br>${winnerText}在${GameState.activeConfig.maxGuesses}次内未能破解。再来一局能帮助你熟悉排除思路。正确答案：`;
+  document.getElementById('overlaySub').innerHTML = `${resultLabel}<br>${summaryText} 正确答案：`;
   document.getElementById('overlayStats').textContent = '';
 
   const finalRow = document.getElementById('answerFinal');
@@ -270,6 +286,12 @@ export function showResult(win, rounds) {
   });
 
   document.getElementById('overlay').classList.add('show');
+
+  // Daily mode is once-per-day: relabel "再来一局" so user knows it will start a classic game
+  const playAgainBtn = document.getElementById('btnPlayAgain');
+  if (playAgainBtn) {
+    playAgainBtn.textContent = GameState.variant === 'daily' ? '试试经典模式' : '再来一局';
+  }
 }
 
 export function hideOverlay() {

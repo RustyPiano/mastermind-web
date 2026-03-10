@@ -68,15 +68,15 @@ function getGuessStatusMessage() {
     : '';
 
   if (GameState.isGuessComplete()) {
-    return `${prefix}密码选好了，点击提交！`;
+    return `${prefix}已选满 4 色，点击提交`;
   }
 
-  return `${prefix}请选择4个颜色提交猜测`;
+  return `${prefix}选满 4 色后提交`;
 }
 
 function getRoundSummaryMessage(roundNumber, exactCount, misplacedCount) {
   const remaining = GameState.activeConfig.maxGuesses - roundNumber;
-  return `第 ${roundNumber} 轮：${exactCount} 个位置正确，${misplacedCount} 个颜色正确但位置错误。还剩 ${remaining} 次机会。`;
+  return `第 ${roundNumber} 轮 · 🟢 ${exactCount} · 🟠 ${misplacedCount} · 剩余 ${remaining} 次`;
 }
 
 function getTodayChallengeKey() {
@@ -394,7 +394,8 @@ function replayGame() {
   hideOverlay();
   setShareButtonEnabled(false);
   if (mode === 'single' && variant === 'daily') {
-    startDailyMode();
+    // Daily is once-per-day; redirect to classic mode so user can keep playing
+    startSingleMode();
   } else if (mode === 'single' && variant === 'duplicates') {
     startDuplicatesMode();
   } else if (mode === 'single') {

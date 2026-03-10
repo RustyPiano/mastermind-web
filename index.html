@@ -43,13 +43,13 @@
       <div class="screen active" id="screenMode">
         <div class="card text-center">
           <div class="card-title">选择模式</div>
-          <p class="text-hint">先选一种玩法开始。想每天回来玩，就从每日挑战开始。</p>
+          <p class="text-hint">猜出 4 色密码的推理游戏。想每天回来玩，从每日挑战开始。</p>
           <div class="onboarding-card" id="onboardingCard" hidden>
             <div class="onboarding-card__head">
               <strong>第一次玩先看这里</strong>
               <button class="onboarding-card__close" id="btnDismissOnboarding" type="button" aria-label="关闭新手说明">×</button>
             </div>
-            <p class="onboarding-card__copy">目标是在 10 次内猜中 4 个颜色组成的密码。经典和每日模式都不允许重复色。</p>
+            <p class="onboarding-card__copy">目标是在 10 次内猜中 4 个颜色组成的密码。经典和每日模式不允许重复色，重复色模式则允许。</p>
             <div class="onboarding-card__legend">
               <span>🟢 颜色和位置都正确</span>
               <span>🟠 颜色正确但位置错误</span>
@@ -139,7 +139,7 @@
       <div class="screen" id="screenGuess">
         <div class="card">
           <div class="card-title" id="guessTitle">玩家二 · 猜测颜色</div>
-          <p class="text-small text-center">直接点击猜测记录中的当前行，切换要填入的位置。</p>
+          <p class="text-small text-center guess-helper">点击槽位切换选色位置</p>
           <div class="palette" id="guessPalette"></div>
 
         </div>
@@ -150,7 +150,7 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-secondary" id="btnClear" type="button">清除</button>
+          <button class="btn btn-secondary" id="btnClear" type="button">重选</button>
           <button class="btn btn-primary" id="btnSubmit" type="button" disabled>提交猜测</button>
         </div>
         <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
@@ -175,6 +175,7 @@
             </div>
           </div>
           <p class="text-small legend-sheet__copy">每轮结束后先看 🟢 数量，再根据 🟠 调整颜色位置。</p>
+          <p class="text-small legend-sheet__copy">规则：10 次内猜中 4 色密码即可通关。经典和每日模式不允许重复色。</p>
         </div>
       </div>
 
@@ -190,9 +191,9 @@
       <div class="overlay-stats" id="overlayStats"></div>
       <div class="answer-row-final" id="answerFinal"></div>
       <div class="overlay-actions">
+        <button class="btn btn-primary" id="btnPlayAgain" type="button">再来一局</button>
         <button class="btn btn-secondary" id="btnShareResult" type="button">分享结果</button>
         <button class="btn btn-secondary" id="btnBackHome" type="button">回到主页</button>
-        <button class="btn btn-primary" id="btnPlayAgain" type="button">再来一局</button>
       </div>
     </div>
   </div>

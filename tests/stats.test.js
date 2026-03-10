@@ -68,6 +68,43 @@ describe('recordGameResult', () => {
     expect(stats.streaks.bestDailyWin).toBe(1);
   });
 
+  it('resets the daily streak when days are not consecutive', () => {
+    let stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      rounds: 3,
+      win: true,
+      finishedAt: '2026-03-10T08:00:00.000Z',
+    });
+
+    // Skip 2026-03-11, come back on 2026-03-12
+    stats = recordGameResult(stats, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-12',
+      rounds: 4,
+      win: true,
+      finishedAt: '2026-03-12T08:00:00.000Z',
+    });
+
+    expect(stats.streaks.currentDailyWin).toBe(1);
+    expect(stats.streaks.bestDailyWin).toBe(1);
+  });
+
+  it('starts streak at 1 on first daily win', () => {
+    const stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      rounds: 3,
+      win: true,
+      finishedAt: '2026-03-10T08:00:00.000Z',
+    });
+
+    expect(stats.streaks.currentDailyWin).toBe(1);
+  });
+
   it('calculates averages from totalRoundsSum and gameCount', () => {
     let stats = recordGameResult(null, {
       mode: 'single',

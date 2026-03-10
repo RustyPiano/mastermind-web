@@ -1,5 +1,25 @@
 const MAX_COMPLETED_DAILIES = 365;
 
+/**
+ * Returns true if currentKey is exactly one calendar day after prevKey.
+ * Both keys are in "YYYY-MM-DD" format.
+ * Uses local-time Date arithmetic to match how challenge keys are generated.
+ */
+function isConsecutiveDay(prevKey, currentKey) {
+  if (!prevKey || !currentKey) return false;
+
+  const [py, pm, pd] = prevKey.split('-').map(Number);
+  const nextDate = new Date(py, pm - 1, pd + 1); // handles month/year overflow
+
+  const nextKey = [
+    nextDate.getFullYear(),
+    String(nextDate.getMonth() + 1).padStart(2, '0'),
+    String(nextDate.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  return nextKey === currentKey;
+}
+
 function createModeStats() {
   return {
     bestRounds: null,
@@ -149,7 +169,8 @@ export function recordGameResult(stats, result) {
     );
 
     if (result.win) {
-      nextStats.streaks.currentDailyWin = nextStats.lastDailyPlayedKey ? nextStats.streaks.currentDailyWin + 1 : 1;
+      const isConsecutive = isConsecutiveDay(nextStats.lastDailyPlayedKey, result.challengeKey);
+      nextStats.streaks.currentDailyWin = isConsecutive ? nextStats.streaks.currentDailyWin + 1 : 1;
       nextStats.streaks.bestDailyWin = Math.max(
         nextStats.streaks.bestDailyWin,
         nextStats.streaks.currentDailyWin,
