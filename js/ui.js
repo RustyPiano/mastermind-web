@@ -133,7 +133,7 @@ function buildPalette(containerId, isUsed, onClick) {
   pal.innerHTML = '';
 
   COLORS.forEach(c => {
-    const ball = makeBall(c.id, '--ball-md');
+    const ball = makeBall(c.id);
     ball.setAttribute('aria-label', c.name);
     const used = isUsed(c.id);
 
@@ -154,6 +154,34 @@ export function buildSetupPalette(onClick) {
 
 export function buildGuessPalette(onClick) {
   buildPalette('guessPalette', id => GameState.isGuessUsed(id), onClick);
+}
+
+export function buildMobileGuessRow(onClickSlot) {
+  const row = document.getElementById('mobileGuessRow');
+  if (!row) return;
+
+  row.innerHTML = '';
+
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    const ball = makeBall(GameState.currentGuess[i], '--ball-md');
+    ball.style.cursor = 'pointer';
+
+    if (GameState.guessActiveSlot === i) {
+      ball.classList.add('ball--focused');
+    }
+
+    if (GameState.currentGuess[i]) {
+      ball.setAttribute('aria-label', `移除并聚焦第${i + 1}个位置`);
+    } else {
+      ball.setAttribute('aria-label', `聚焦位置 ${i + 1}`);
+    }
+
+    if (onClickSlot) {
+      ball.addEventListener('click', () => onClickSlot(i));
+    }
+
+    row.appendChild(ball);
+  }
 }
 
 /* ---- Current Guess Display ---- */
@@ -178,6 +206,8 @@ export function updateCurrentGuessDisplay(onClickSlot) {
 
     old.replaceWith(ball);
   }
+
+  buildMobileGuessRow(onClickSlot);
 }
 
 /* ---- Guess Info ---- */
@@ -262,4 +292,8 @@ export function applyModeLabels(mode) {
 export function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
+
+  if (window.innerWidth <= 640) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
