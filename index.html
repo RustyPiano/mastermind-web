@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="密码机 - 在线双人猜色解码游戏，灵感来自 GiiKER 计客超级密码机。从7种颜色中设置4位密码，挑战你的逻辑推理能力！">
+  <meta name="keywords" content="密码机,Mastermind,猜色游戏,GiiKER,计客,解谜游戏,逻辑推理">
+  <meta name="author" content="密码机">
+  <meta name="theme-color" content="#0a0a0f">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="密码机 · MASTERMIND">
+  <meta property="og:description" content="在线双人猜色解码游戏，挑战你的逻辑推理能力！">
+  <meta property="og:type" content="website">
+
+  <title>密码机 · MASTERMIND</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1 class="title">密码机</h1>
+    <p class="subtitle">MASTERMIND · 颜色解码挑战</p>
+  </header>
+
+  <main class="main-layout">
+    <!-- Board: Guess History -->
+    <section class="board" id="board" aria-label="猜测记录面板">
+      <div class="board-title">猜测记录</div>
+      <div class="rows-container" id="rowsContainer"></div>
+    </section>
+
+    <!-- Side Panel: Setup / Transition / Guess -->
+    <aside class="side-panel" aria-label="操作面板">
+
+      <!-- Screen 1: Setup -->
+      <div class="screen active" id="screenSetup">
+        <div class="card">
+          <div class="card-title">玩家一 · 设置密码</div>
+          <p class="text-hint">
+            从7色中选 <strong>4种不同颜色</strong>，顺序即密码
+          </p>
+          <div class="secret-row" id="secretRow"></div>
+          <p class="text-small">点击已选颜色可移除</p>
+          <div class="palette" id="setupPalette"></div>
+        </div>
+        <button class="btn btn-primary" id="btnConfirmSecret" type="button" disabled>确认密码 →</button>
+      </div>
+
+      <!-- Screen 2: Transition (Device Handoff) -->
+      <div class="screen" id="screenTransition">
+        <div class="card text-center">
+          <div class="card-title">密码已锁定</div>
+          <div class="lock-icon">🔒</div>
+          <p class="lock-text">
+            请将设备交给<strong>玩家二</strong><br>
+            确保玩家一已离开屏幕后继续
+          </p>
+        </div>
+        <button class="btn btn-primary" id="btnStartGuessing" type="button">玩家二准备好了 →</button>
+      </div>
+
+      <!-- Screen 3: Guessing -->
+      <div class="screen" id="screenGuess">
+        <div class="card">
+          <div class="card-title">玩家二 · 猜测颜色</div>
+          <div class="palette" id="guessPalette"></div>
+          <div class="selected-count">已选：<span id="selectedCount">0</span>/4</div>
+        </div>
+
+        <div class="status-box" id="statusBox" aria-live="polite">请选择4个颜色提交猜测</div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnClear" type="button">清除</button>
+          <button class="btn btn-primary" id="btnSubmit" type="button" disabled>提交猜测</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">反馈说明</div>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot legend-dot--correct"></div>
+              颜色 &amp; 位置均正确
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot legend-dot--misplaced"></div>
+              颜色正确，位置错误
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot legend-dot--none"></div>
+              颜色不在密码中
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Result Overlay -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="游戏结果">
+    <div class="overlay-card">
+      <div class="overlay-emoji" id="overlayEmoji"></div>
+      <div class="overlay-title" id="overlayTitle"></div>
+      <div class="overlay-sub" id="overlaySub"></div>
+      <div class="answer-row-final" id="answerFinal"></div>
+      <button class="btn btn-primary" id="btnPlayAgain" type="button">再来一局</button>
+    </div>
+  </div>
+
+  <noscript>
+    <p style="color:#e0dff5;text-align:center;padding:40px;">
+      本游戏需要启用 JavaScript 才能运行。请在浏览器设置中开启 JavaScript。
+    </p>
+  </noscript>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

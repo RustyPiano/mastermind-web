@@ -1,0 +1,224 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.card-title {
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+}
+
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  .btn-secondary:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+  }
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+.btn-primary:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+}
+
+.btn-secondary:active {
+  border-color: var(--text-primary);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.btn-row .btn-secondary {
+  flex: 1;
+}
+
+.btn-row .btn-primary {
+  flex: 2;
+}
+
+.status-box {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: var(--text-sm);
+  text-align: center;
+  line-height: 1.6;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.screen.active {
+  display: flex;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: var(--space-md);
+}
+
+.overlay.show {
+  display: flex;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+.overlay-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: var(--shadow-overlay);
+  animation: overlayCardIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.overlay-emoji {
+  font-size: 48px;
+  margin-bottom: var(--space-sm);
+}
+
+.overlay-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+  color: var(--text-primary);
+}
+
+.overlay-sub {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin-bottom: var(--space-lg);
+  line-height: 1.6;
+}
+
+.overlay-sub strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.answer-row-final {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.legend-dot--correct {
+  background: var(--color-correct);
+}
+
+.legend-dot--misplaced {
+  background: var(--color-misplaced);
+}
+
+.legend-dot--none {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+}
+
+.lock-icon {
+  font-size: 48px;
+  margin: var(--space-md) 0;
+  opacity: 0.9;
+}
+
+.lock-text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.lock-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlayCardIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
