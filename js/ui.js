@@ -220,11 +220,14 @@ export function renderFeedback(round, feedback) {
 /* ---- Result Overlay ---- */
 
 export function showResult(win, rounds) {
+  const isSingleMode = GameState.mode === 'single';
+  const winnerText = isSingleMode ? '你' : '玩家二';
+
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
   document.getElementById('overlaySub').innerHTML = win
-    ? `玩家二用了 <strong>${rounds}</strong> 次破解了密码！正确答案：`
-    : `玩家二在${MAX_GUESSES}次内未能破解。正确答案：`;
+    ? `${winnerText}用了 <strong>${rounds}</strong> 次破解了密码！正确答案：`
+    : `${winnerText}在${MAX_GUESSES}次内未能破解。正确答案：`;
 
   const finalRow = document.getElementById('answerFinal');
   finalRow.innerHTML = '';

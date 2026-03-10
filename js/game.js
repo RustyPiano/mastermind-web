@@ -170,7 +170,7 @@ function submitGuess() {
   GameState.clearGuess();
   refreshGuessUI();
   updateCurrentGuessDisplay(handleGuessSlotClick); // Initialize new row
-  updateStatus(`第${r + 1}轮：🟢 ${greens}个正确 ⚪ ${whites}个位置错 — 继续！`);
+  updateStatus(`第${r + 1}轮：🟢 ${greens}个正确 🟠 ${whites}个位置错 — 继续！`);
   highlightActiveRow();
 }
 
