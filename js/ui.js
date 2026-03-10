@@ -7,6 +7,7 @@ import {
   getBestSinglePreset,
   getModeWinRate,
   normalizeStats,
+  ACHIEVEMENTS,
 } from './stats.js';
 import { getModeConfig } from './mode-config.js';
 
@@ -128,7 +129,7 @@ export function buildSecretRow(onClickSlot) {
   for (let i = 0; i < GameState.activeConfig.codeLength; i++) {
     const ball = makeBall(GameState.secretCode[i], '--ball-md');
     ball.style.cursor = 'pointer';
-    
+
     if (GameState.setupActiveSlot === i) {
       ball.classList.add('ball--focused');
     }
@@ -250,8 +251,14 @@ export function renderFeedback(round, feedback) {
   sorted.forEach((f, i) => {
     const dot = document.getElementById(`fb${round}-${i}`);
     if (!dot) return;
-    if (f === FEEDBACK.EXACT) dot.classList.add('exact');
-    else if (f === FEEDBACK.MISPLACED) dot.classList.add('misplaced');
+
+    dot.style.animationDelay = `${i * 150}ms`;
+
+    if (f === FEEDBACK.EXACT) {
+      dot.classList.add('exact');
+    } else if (f === FEEDBACK.MISPLACED) {
+      dot.classList.add('misplaced');
+    }
   });
 }
 
@@ -283,13 +290,35 @@ export function showResult(win, rounds) {
     summaryText = `${winnerText}没能在 ${roundText} 内破解密码。`;
   }
 
+  let coachText = '';
+  if (win && GameState.mode !== 'dual') {
+    // Generate coach evaluation for single player modes based on attempts
+    if (rounds <= 3) {
+      coachText = `\n\n<span style="color:var(--accent-primary);">S级评价：神机妙算！你简直是福尔摩斯！</span>`;
+    } else if (rounds <= 5) {
+      coachText = `\n\n<span style="color:var(--color-correct);">A级评价：思路清晰，逻辑缜密。</span>`;
+    } else if (rounds <= 8) {
+      coachText = `\n\n<span style="color:var(--color-misplaced);">B级评价：稳扎稳打，步步为营。</span>`;
+    } else {
+      coachText = `\n\n<span style="color:var(--text-muted);">C级评价：惊险过关！好险好险。</span>`;
+    }
+  } else if (win && GameState.mode === 'dual' && GameState.isChallenge) {
+    coachText = `\n\n<span style="color:var(--accent-primary);">干得漂亮！你成功破解了朋友留下的秘密。</span>`;
+  }
+
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
   document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
-  document.getElementById('overlaySub').innerHTML = `${resultLabel}<br>${summaryText} 正确答案：`;
+  document.getElementById('overlaySub').innerHTML = `${resultLabel}<br>${summaryText}${coachText}`;
   document.getElementById('overlayStats').textContent = '';
 
   const finalRow = document.getElementById('answerFinal');
   finalRow.innerHTML = '';
+  finalRow.style.flexWrap = 'wrap';
+
+  const answerLabel = document.createElement('div');
+  answerLabel.textContent = '正确答案：';
+  answerLabel.style.cssText = 'width:100%;text-align:center;font-size:0.85rem;color:var(--text-muted);margin-bottom:4px;';
+  finalRow.appendChild(answerLabel);
   GameState.secretCode.forEach(colorId => {
     const ball = makeBall(colorId, '--ball-lg');
     finalRow.appendChild(ball);
@@ -434,6 +463,61 @@ export function renderStatsPanel(stats) {
     sectionEl.appendChild(cardsEl);
     panel.appendChild(sectionEl);
   });
+
+  // Render Achievements Section
+  const achievementsEl = document.createElement('section');
+  achievementsEl.className = 'stats-section achievements-section';
+  achievementsEl.style.marginTop = '16px';
+
+  const badgeTitleEl = document.createElement('div');
+  badgeTitleEl.className = 'stats-section__title';
+  badgeTitleEl.textContent = '成就徽章';
+  achievementsEl.appendChild(badgeTitleEl);
+
+  const badgesGrid = document.createElement('div');
+  badgesGrid.style.display = 'flex';
+  badgesGrid.style.gap = '8px';
+  badgesGrid.style.flexWrap = 'wrap';
+  badgesGrid.style.marginTop = '8px';
+
+  const userAchievements = safeStats.achievements || [];
+
+  const badgesList = [
+    { id: 'FIRST_TRY', emoji: '🎯', title: '一发入魂', label: ACHIEVEMENTS.FIRST_TRY },
+    { id: 'LAST_CHANCE', emoji: '⏱️', title: '极限绝杀', label: ACHIEVEMENTS.LAST_CHANCE },
+    { id: 'BLIND', emoji: '🙈', title: '盲人摸象', label: ACHIEVEMENTS.BLIND },
+  ];
+
+  badgesList.forEach(badge => {
+    const isUnlocked = userAchievements.includes(badge.id);
+    const badgeEl = document.createElement('div');
+    badgeEl.style.padding = '8px 12px';
+    badgeEl.style.backgroundColor = 'var(--bg-card)';
+    badgeEl.style.borderRadius = '8px';
+    badgeEl.style.display = 'flex';
+    badgeEl.style.flexDirection = 'column';
+    badgeEl.style.alignItems = 'center';
+    badgeEl.style.flex = '1';
+    badgeEl.style.minWidth = '80px';
+    badgeEl.style.opacity = isUnlocked ? '1' : '0.4';
+
+    const bgEmoji = document.createElement('div');
+    bgEmoji.textContent = isUnlocked ? badge.emoji : '❓';
+    bgEmoji.style.fontSize = '24px';
+    bgEmoji.style.marginBottom = '4px';
+
+    const bgLabel = document.createElement('div');
+    bgLabel.textContent = badge.title;
+    bgLabel.style.fontSize = '12px';
+    bgLabel.style.color = isUnlocked ? 'var(--text-primary)' : 'var(--text-muted)';
+
+    badgeEl.appendChild(bgEmoji);
+    badgeEl.appendChild(bgLabel);
+    badgesGrid.appendChild(badgeEl);
+  });
+
+  achievementsEl.appendChild(badgesGrid);
+  panel.appendChild(achievementsEl);
 }
 
 export function renderResultStats(stats, result) {

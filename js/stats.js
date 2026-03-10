@@ -1,4 +1,5 @@
 import { SINGLE_PRESET_IDS, getModeConfig } from './mode-config.js';
+import { FEEDBACK } from './engine.js';
 
 const MAX_COMPLETED_DAILIES = 365;
 const TRACKED_VARIANTS = Object.freeze([
@@ -63,8 +64,15 @@ export function createDefaultStats() {
     },
     completedDailyKeys: [],
     lastDailyPlayedKey: null,
+    achievements: [],
   };
 }
+
+export const ACHIEVEMENTS = {
+  FIRST_TRY: '一发入魂',
+  LAST_CHANCE: '极限绝杀',
+  BLIND: '盲人摸象',
+};
 
 export function normalizeStats(stats) {
   const defaults = createDefaultStats();
@@ -104,7 +112,16 @@ export function normalizeStats(stats) {
       ? [...stats.completedDailyKeys]
       : [],
     lastDailyPlayedKey: stats.lastDailyPlayedKey ?? null,
+    achievements: Array.isArray(stats.achievements)
+      ? [...stats.achievements]
+      : [],
   };
+}
+
+function unlockAchievement(stats, achievementId) {
+  if (!stats.achievements.includes(achievementId)) {
+    stats.achievements.push(achievementId);
+  }
 }
 
 function addCompletedDailyKey(keys, challengeKey) {
@@ -248,8 +265,26 @@ export function recordGameResult(stats, result) {
   nextStats.totals.gamesPlayed += 1;
   if (result.win) {
     nextStats.totals.wins += 1;
+
+    // Evaluate Win Achievements
+    if (result.rounds === 1) {
+      unlockAchievement(nextStats, 'FIRST_TRY');
+    }
+    if (result.rounds === result.maxGuesses) {
+      unlockAchievement(nextStats, 'LAST_CHANCE');
+    }
   } else {
     nextStats.totals.losses += 1;
+  }
+
+  // Evaluate other achievements (e.g. Blind)
+  // Check if the very first guess got absolutely zero correct pegs
+  if (result.history && result.history.length > 0) {
+    const firstGuessFb = result.history[0].feedback;
+    const allNone = firstGuessFb.every(f => f === FEEDBACK.NONE);
+    if (allNone) {
+      unlockAchievement(nextStats, 'BLIND');
+    }
   }
 
   if (trackedVariant) {

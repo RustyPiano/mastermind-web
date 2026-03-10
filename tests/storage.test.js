@@ -159,6 +159,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: [],
       lastDailyPlayedKey: null,
+      achievements: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: false });
 
@@ -180,6 +181,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: ['2026-03-10'],
       lastDailyPlayedKey: null,
+      achievements: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: true });
   });
@@ -205,6 +207,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: ['2026-03-10'],
       lastDailyPlayedKey: null,
+      achievements: [],
     });
   });
 });

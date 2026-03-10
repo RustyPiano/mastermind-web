@@ -14,7 +14,7 @@ import {
   saveSession,
   saveStats,
 } from './storage.js';
-import { shareResult } from './share.js';
+import { shareResult, buildChallengeUrl } from './share.js';
 import {
   buildBoard,
   buildSecretRow,
@@ -139,6 +139,8 @@ function recordFinishedGame({ win, rounds }) {
     mode: GameState.mode,
     variant: GameState.variant,
     challengeKey: GameState.challengeKey,
+    isChallenge: GameState.isChallenge,
+    challengeUrl: GameState.challengeUrl,
     rounds,
     win,
     history: GameState.guessHistory.map((entry) => ({
@@ -220,6 +222,29 @@ function confirmSecret() {
   if (!GameState.isSecretComplete()) return;
   setCurrentScreen('screenTransition');
   scheduleSave();
+}
+
+async function generateChallenge() {
+  if (!GameState.isSecretComplete()) return;
+
+  const url = buildChallengeUrl(GameState.secretCode);
+  try {
+    if (navigator?.share) {
+      await navigator.share({
+        title: '密码机 朋友挑战',
+        text: '我设置了一个密码，来破解吧！',
+        url: url
+      });
+      updateStatus('挑战链接分享成功');
+    } else if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      updateStatus('挑战链接已复制到剪贴板，快发给朋友吧！');
+    } else {
+      updateStatus('无法分享，请截图或手动告诉朋友');
+    }
+  } catch (err) {
+    updateStatus('分享失败或被取消');
+  }
 }
 
 function startGuessing() {
@@ -304,6 +329,25 @@ function startDualMode() {
   refreshSetupUI();
 }
 
+function startChallengeMode(secretCode) {
+  GameState.reset();
+  GameState.setMode('dual');
+  GameState.setVariant(DEFAULT_MODE_ID);
+  GameState.setActiveConfig(getModeConfig(DEFAULT_MODE_ID));
+  GameState.setStartedAt();
+  GameState.setStatus('in_progress');
+
+  // Set the specific challenge properties string bypass
+  GameState.secretCode = [...secretCode];
+  GameState.isChallenge = true;
+  GameState.challengeUrl = window.location.href; // Keep the original URL for sharing later
+
+  applyModeLabels('dual', 'classic'); // We can reuse dual labels for the guess phase
+  buildBoard();
+  scheduleSave();
+  startGuessing();
+}
+
 /* ============================================
    Guess Phase (Player 2)
    ============================================ */
@@ -361,11 +405,17 @@ function submitGuess() {
     recordFinishedGame({ win: true, rounds: r + 1 });
     clearSession();
     refreshModeSelectionMeta();
+
+    // Add win animation to answer row
     setTimeout(() => {
+      const finalRow = document.getElementById('answerFinal');
+      if (finalRow) {
+        finalRow.classList.add('reveal-win');
+      }
       showResult(true, r + 1);
       renderResultStats(loadStats(), latestResult);
       setShareButtonEnabled(true);
-    }, 400);
+    }, 400 + (GameState.activeConfig.codeLength * 150)); // wait for peg animations
     return;
   }
 
@@ -378,7 +428,7 @@ function submitGuess() {
       showResult(false);
       renderResultStats(loadStats(), latestResult);
       setShareButtonEnabled(true);
-    }, 400);
+    }, 400 + (GameState.activeConfig.codeLength * 150)); // wait for peg animations
     return;
   }
 
@@ -457,6 +507,11 @@ function bindEvents() {
   document.getElementById('btnConfirmSecret')
     .addEventListener('click', confirmSecret);
 
+  const genBtn = document.getElementById('btnGenerateChallenge');
+  if (genBtn) {
+    genBtn.addEventListener('click', generateChallenge);
+  }
+
   document.getElementById('btnStartGuessing')
     .addEventListener('click', startGuessing);
 
@@ -512,6 +567,25 @@ function init() {
   setOnboardingVisibility(!loadPreferences().firstRunDismissed);
   setLegendVisibility(false);
   setStatsPanelExpanded(false);
+
+  // Check URL for challenge parameter first
+  const params = new URLSearchParams(window.location.search);
+  const challengeParam = params.get('challenge');
+
+  if (challengeParam) {
+    try {
+      const decoded = JSON.parse(atob(challengeParam));
+      if (decoded && Array.isArray(decoded.s) && decoded.s.length > 0) {
+        // Clear the param from URL without refreshing so it doesn't stay there if they replay
+        window.history.replaceState({}, document.title, window.location.pathname);
+        startChallengeMode(decoded.s);
+        return;
+      }
+    } catch (err) {
+      console.warn('Failed to parse challenge parameter');
+    }
+  }
+
   const savedSession = loadSession();
 
   if (savedSession) {
