@@ -185,6 +185,16 @@ function resetGame() {
   buildBoard();
 }
 
+function replayGame() {
+  const mode = GameState.mode;
+  hideOverlay();
+  if (mode === 'single') {
+    startSingleMode();
+  } else {
+    startDualMode();
+  }
+}
+
 /* ============================================
    Event Binding
    ============================================ */
@@ -208,8 +218,11 @@ function bindEvents() {
   document.getElementById('btnSubmit')
     .addEventListener('click', submitGuess);
 
-  document.getElementById('btnPlayAgain')
+  document.getElementById('btnBackHome')
     .addEventListener('click', resetGame);
+
+  document.getElementById('btnPlayAgain')
+    .addEventListener('click', replayGame);
 }
 
 /* ============================================

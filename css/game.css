@@ -222,11 +222,14 @@
   .main-layout {
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 16px;
+    min-height: calc(100vh - 200px);
   }
 
-  /* 默认：side-panel 在上，board 在下，正常堆叠可滚动 */
+  /* 非猜测阶段隐藏 board */
   .board {
+    display: none;
     width: 100%;
     max-width: 480px;
     order: 2;
@@ -239,6 +242,7 @@
     min-width: unset;
     order: 1;
     gap: 14px;
+    margin: auto 0;
   }
 
   .board-title {

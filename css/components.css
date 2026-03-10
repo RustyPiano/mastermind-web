@@ -168,6 +168,19 @@
   margin-bottom: var(--space-lg);
 }
 
+.overlay-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.overlay-actions .btn-secondary {
+  flex: 1;
+}
+
+.overlay-actions .btn-primary {
+  flex: 2;
+}
+
 .legend {
   display: flex;
   flex-direction: column;
