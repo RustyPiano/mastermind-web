@@ -373,6 +373,10 @@
     margin-top: 6px;
   }
 
+  body.game-phase--guessing .palette[data-color-count="6"] {
+    --palette-row-width: 116px;
+  }
+
   /* 状态提示压缩 */
   body.game-phase--guessing .status-box {
     min-height: unset;
@@ -428,6 +432,10 @@
     gap: 8px;
   }
 
+  body.game-phase--guessing .palette[data-color-count="6"] {
+    --palette-row-width: 106px;
+  }
+
   body.game-phase--guessing .pegs .ball {
     --ball-size: 26px;
   }
@@ -442,6 +450,10 @@
   .palette {
     --palette-ball-size: 32px;
     --palette-row-width: 164px;
+  }
+
+  .palette[data-color-count="6"] {
+    --palette-row-width: 116px;
   }
 
   .pegs .ball {
