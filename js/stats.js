@@ -1,4 +1,4 @@
-import { SINGLE_PRESET_IDS } from './mode-config.js';
+import { SINGLE_PRESET_IDS, getModeConfig } from './mode-config.js';
 
 const MAX_COMPLETED_DAILIES = 365;
 const TRACKED_VARIANTS = Object.freeze([
@@ -133,6 +133,104 @@ export function getAverageRounds(modeStats) {
   }
 
   return modeStats.totalRoundsSum / modeStats.gameCount;
+}
+
+export function getModeWinRate(modeStats) {
+  if (!modeStats?.gameCount) {
+    return 0;
+  }
+
+  return Math.round(((modeStats.wins ?? 0) / modeStats.gameCount) * 100);
+}
+
+export function getBestSinglePreset(stats) {
+  const safeStats = normalizeStats(stats);
+  const candidates = SINGLE_PRESET_IDS
+    .map((variant) => {
+      const modeStats = safeStats.modes[variant];
+      if (modeStats.bestRounds === null) return null;
+
+      return {
+        variant,
+        label: getModeConfig(variant).label,
+        bestRounds: modeStats.bestRounds,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.bestRounds - b.bestRounds);
+
+  return candidates[0] ?? null;
+}
+
+function buildModeMetrics(modeStats) {
+  const average = getAverageRounds(modeStats);
+
+  return {
+    bestText: modeStats?.bestRounds === null || modeStats?.bestRounds === undefined
+      ? '-'
+      : `${modeStats.bestRounds}步`,
+    averageText: average === null ? '-' : `${average.toFixed(1)}步`,
+    winRateText: `${getModeWinRate(modeStats)}%`,
+    gamesText: String(modeStats?.gameCount ?? 0),
+  };
+}
+
+export function buildStatsPanelSections(stats) {
+  const safeStats = normalizeStats(stats);
+  const makeModeCard = (variant) => {
+    const metrics = buildModeMetrics(safeStats.modes[variant]);
+
+    return {
+      kind: 'mode',
+      variant,
+      title: getModeConfig(variant).label,
+      metrics: [
+        { label: '最佳', value: metrics.bestText },
+        { label: '平均', value: metrics.averageText },
+        { label: '胜率', value: metrics.winRateText },
+        { label: '场次', value: metrics.gamesText },
+      ],
+    };
+  };
+
+  return [
+    {
+      id: 'single-presets',
+      title: '单人闯关',
+      cards: SINGLE_PRESET_IDS.map(makeModeCard),
+    },
+    {
+      id: 'daily',
+      title: '每日挑战',
+      cards: [{
+        kind: 'daily',
+        variant: 'daily',
+        title: '每日挑战',
+        metrics: [
+          { label: '最佳', value: buildModeMetrics(safeStats.modes.daily).bestText },
+          { label: '平均', value: buildModeMetrics(safeStats.modes.daily).averageText },
+          { label: '胜率', value: buildModeMetrics(safeStats.modes.daily).winRateText },
+          { label: '当前连胜', value: String(safeStats.streaks.currentDailyWin) },
+          { label: '最佳连胜', value: String(safeStats.streaks.bestDailyWin) },
+        ],
+      }],
+    },
+    {
+      id: 'variants',
+      title: '其他模式',
+      cards: [
+        makeModeCard('duplicates'),
+        {
+          kind: 'dual',
+          variant: 'dual',
+          title: '双人对战',
+          metrics: [
+            { label: '总场次', value: String(safeStats.modes.dual.gamesPlayed ?? 0) },
+          ],
+        },
+      ],
+    },
+  ];
 }
 
 export function recordGameResult(stats, result) {

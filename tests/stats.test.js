@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { getAverageRounds, hasCompletedDaily, recordGameResult } from '../js/stats.js';
+import {
+  buildStatsPanelSections,
+  getAverageRounds,
+  getBestSinglePreset,
+  getModeWinRate,
+  hasCompletedDaily,
+  recordGameResult,
+} from '../js/stats.js';
 
 describe('recordGameResult', () => {
   it('initializes stats on the first classic win', () => {
@@ -217,5 +224,66 @@ describe('hasCompletedDaily', () => {
   it('checks whether a challenge key is already completed', () => {
     expect(hasCompletedDaily({ completedDailyKeys: ['2026-03-10'] }, '2026-03-10')).toBe(true);
     expect(hasCompletedDaily({ completedDailyKeys: ['2026-03-10'] }, '2026-03-11')).toBe(false);
+  });
+});
+
+describe('stats helpers', () => {
+  it('calculates mode win rate from wins and game count', () => {
+    expect(getModeWinRate({ wins: 3, gameCount: 4 })).toBe(75);
+    expect(getModeWinRate({ wins: 0, gameCount: 0 })).toBe(0);
+  });
+
+  it('selects the best single preset by lowest best round count', () => {
+    const stats = {
+      modes: {
+        starter: { bestRounds: 6 },
+        classic: { bestRounds: 4 },
+        hard: { bestRounds: null },
+        expert: { bestRounds: 5 },
+      },
+    };
+
+    expect(getBestSinglePreset(stats)).toEqual({
+      variant: 'classic',
+      label: '经典模式',
+      bestRounds: 4,
+    });
+  });
+
+  it('returns null when no single preset has a win yet', () => {
+    expect(getBestSinglePreset({
+      modes: {
+        starter: { bestRounds: null },
+        classic: { bestRounds: null },
+        hard: { bestRounds: null },
+        expert: { bestRounds: null },
+      },
+    })).toBeNull();
+  });
+
+  it('builds grouped stats panel sections for all current modes', () => {
+    const stats = recordGameResult(recordGameResult(null, {
+      mode: 'single',
+      variant: 'classic',
+      challengeKey: null,
+      rounds: 4,
+      win: true,
+      finishedAt: '2026-03-10T08:00:00.000Z',
+    }), {
+      mode: 'single',
+      variant: 'duplicates',
+      challengeKey: null,
+      rounds: 7,
+      win: false,
+      finishedAt: '2026-03-10T09:00:00.000Z',
+    });
+
+    const sections = buildStatsPanelSections(stats);
+
+    expect(sections).toHaveLength(3);
+    expect(sections[0].title).toBe('单人闯关');
+    expect(sections[0].cards).toHaveLength(4);
+    expect(sections[1].cards[0].metrics.some((metric) => metric.label === '当前连胜')).toBe(true);
+    expect(sections[2].cards.map((card) => card.title)).toEqual(['重复色模式', '双人对战']);
   });
 });

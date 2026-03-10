@@ -1,7 +1,13 @@
 import { COLORS, getAvailableColors } from './constants.js';
 import { GameState } from './state.js';
 import { FEEDBACK } from './engine.js';
-import { getAverageRounds } from './stats.js';
+import {
+  buildStatsPanelSections,
+  getAverageRounds,
+  getBestSinglePreset,
+  getModeWinRate,
+  normalizeStats,
+} from './stats.js';
 import { getModeConfig } from './mode-config.js';
 
 /* ---- Helpers ---- */
@@ -370,55 +376,93 @@ export function updateDailyModeEntry({ challengeKey, isCompleted, hasActiveSessi
 }
 
 export function renderStatsPanel(stats) {
-  const safeStats = stats ?? {
-    totals: { gamesPlayed: 0, wins: 0 },
-    streaks: { currentDailyWin: 0, bestDailyWin: 0 },
-    modes: { classic: { bestRounds: null } },
-  };
-  const gamesPlayed = safeStats.totals?.gamesPlayed ?? 0;
-  const winRate = gamesPlayed === 0
-    ? 0
-    : Math.round(((safeStats.totals?.wins ?? 0) / gamesPlayed) * 100);
-  const classicBest = safeStats.modes?.classic?.bestRounds ?? null;
-  const streak = safeStats.streaks?.currentDailyWin ?? 0;
+  const safeStats = normalizeStats(stats);
+  const panel = document.getElementById('statsPanel');
+  if (!panel) return;
 
-  document.getElementById('statsGamesPlayed').textContent = String(gamesPlayed);
-  document.getElementById('statsWinRate').textContent = `${winRate}%`;
-  document.getElementById('statsDailyStreak').textContent = String(streak);
-  document.getElementById('statsBestDailyStreak').textContent = String(safeStats.streaks?.bestDailyWin ?? 0);
-  document.getElementById('statsBestClassic').textContent = classicBest === null ? '-' : `${classicBest}步`;
-  document.getElementById('statsSummaryLine').textContent = `已玩 ${gamesPlayed} 局 · 经典最佳 ${classicBest === null ? '-' : `${classicBest}步`} · 每日连胜 ${streak}`;
+  const gamesPlayed = safeStats.totals?.gamesPlayed ?? 0;
+  const streak = safeStats.streaks?.currentDailyWin ?? 0;
+  const bestSingle = getBestSinglePreset(safeStats);
+
+  document.getElementById('statsSummaryLine').textContent = `已玩 ${gamesPlayed} 局 · 单人最佳 ${bestSingle ? `${bestSingle.label} ${bestSingle.bestRounds}步` : '-'} · 每日连胜 ${streak}`;
+
+  panel.innerHTML = '';
+  buildStatsPanelSections(safeStats).forEach((section) => {
+    const sectionEl = document.createElement('section');
+    sectionEl.className = 'stats-section';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'stats-section__title';
+    titleEl.textContent = section.title;
+    sectionEl.appendChild(titleEl);
+
+    const cardsEl = document.createElement('div');
+    cardsEl.className = 'stats-cards';
+
+    section.cards.forEach((card) => {
+      const cardEl = document.createElement('article');
+      cardEl.className = 'stats-card';
+
+      const cardTitle = document.createElement('div');
+      cardTitle.className = 'stats-card__title';
+      cardTitle.textContent = card.title;
+      cardEl.appendChild(cardTitle);
+
+      const metricsEl = document.createElement('div');
+      metricsEl.className = 'stats-card__metrics';
+
+      card.metrics.forEach((metric) => {
+        const metricEl = document.createElement('div');
+        metricEl.className = 'stats-card__metric';
+
+        const labelEl = document.createElement('span');
+        labelEl.className = 'stats-card__label';
+        labelEl.textContent = metric.label;
+
+        const valueEl = document.createElement('strong');
+        valueEl.className = 'stats-card__value';
+        valueEl.textContent = metric.value;
+
+        metricEl.append(labelEl, valueEl);
+        metricsEl.appendChild(metricEl);
+      });
+
+      cardEl.appendChild(metricsEl);
+      cardsEl.appendChild(cardEl);
+    });
+
+    sectionEl.appendChild(cardsEl);
+    panel.appendChild(sectionEl);
+  });
 }
 
 export function renderResultStats(stats, result) {
   const target = document.getElementById('overlayStats');
   if (!target || !stats || !result) return;
+  const safeStats = normalizeStats(stats);
 
   if (result.variant === 'daily') {
-    target.textContent = result.win
-      ? `今日挑战已完成\n当前每日连胜 ${stats.streaks.currentDailyWin} · 最佳 ${stats.streaks.bestDailyWin}`
-      : `今天这题还没拿下\n明天还有新的每日挑战`;
+    const average = getAverageRounds(safeStats.modes.daily);
+    target.textContent = `${result.win ? '今日挑战已完成' : '今天这题还没拿下'}\n最佳 ${safeStats.modes.daily.bestRounds === null ? '-' : `${safeStats.modes.daily.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(safeStats.modes.daily)}%\n当前每日连胜 ${safeStats.streaks.currentDailyWin} · 最佳 ${safeStats.streaks.bestDailyWin}`;
     return;
   }
 
-  if (result.mode === 'single') {
-    const modeStats = stats.modes?.[result.variant];
+  if (result.mode === 'single' && result.variant !== 'duplicates') {
+    const modeStats = safeStats.modes?.[result.variant];
     const modeLabel = getModeConfig(result.variant).label;
     const average = getAverageRounds(modeStats);
-    const averageText = average === null ? '-' : average.toFixed(1);
-    const bestText = modeStats?.bestRounds ?? null;
-    const bestSummary = bestText === null
-      ? `${modeLabel}暂时还没有通关记录`
-      : result.win && result.rounds === bestText
-        ? `你刷新或追平了${modeLabel}最佳`
-        : result.win
-          ? `距离${modeLabel}最佳还差 ${Math.max(result.rounds - bestText, 0)} 步`
-          : `当前${modeLabel}最佳仍是 ${bestText} 步`;
-    target.textContent = `${bestSummary}\n${modeLabel}最佳 ${bestText === null ? '-' : `${bestText}步`} · 平均 ${averageText}步`;
+    target.textContent = `${modeLabel}最佳 ${modeStats?.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
     return;
   }
 
-  target.textContent = `累计双人对战 ${stats.modes.dual.gamesPlayed} 局`;
+  if (result.variant === 'duplicates') {
+    const modeStats = safeStats.modes.duplicates;
+    const average = getAverageRounds(modeStats);
+    target.textContent = `重复色模式最佳 ${modeStats.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
+    return;
+  }
+
+  target.textContent = `累计双人对战 ${safeStats.modes.dual.gamesPlayed} 局`;
 }
 
 export function setStatsPanelExpanded(expanded) {
