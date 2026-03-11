@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildChallengeNativeSharePayload,
   buildChallengeInviteText,
   buildChallengeShareText,
   buildShareText,
   feedbackToEmoji,
+  isMobileShareEnvironment,
   shareResult,
 } from '../js/share.js';
 import { FEEDBACK } from '../js/engine.js';
@@ -116,6 +118,49 @@ describe('buildChallengeInviteText', () => {
       '密码机 困难模式 好友挑战',
       '我设置了一个密码，来破解吧！',
     ].join('\n'));
+  });
+});
+
+describe('isMobileShareEnvironment', () => {
+  it('detects mobile browsers from userAgentData', () => {
+    expect(isMobileShareEnvironment({ userAgentData: { mobile: true } })).toBe(true);
+  });
+
+  it('detects mobile browsers from userAgent', () => {
+    expect(isMobileShareEnvironment({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)' })).toBe(true);
+    expect(isMobileShareEnvironment({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })).toBe(false);
+  });
+});
+
+describe('buildChallengeNativeSharePayload', () => {
+  it('keeps url separate on desktop to avoid duplicate copied links', () => {
+    expect(buildChallengeNativeSharePayload(
+      'https://mastermind.rustypiano.com/?challenge=abc',
+      'hard',
+      { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
+    )).toEqual({
+      title: '密码机 朋友挑战',
+      text: [
+        '密码机 困难模式 好友挑战',
+        '我设置了一个密码，来破解吧！',
+      ].join('\n'),
+      url: 'https://mastermind.rustypiano.com/?challenge=abc',
+    });
+  });
+
+  it('inlines the url on mobile so system copy keeps the challenge link', () => {
+    expect(buildChallengeNativeSharePayload(
+      'https://mastermind.rustypiano.com/?challenge=abc',
+      'hard',
+      { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)' },
+    )).toEqual({
+      title: '密码机 朋友挑战',
+      text: [
+        '密码机 困难模式 好友挑战',
+        '我设置了一个密码，来破解吧！',
+        'https://mastermind.rustypiano.com/?challenge=abc',
+      ].join('\n'),
+    });
   });
 });
 

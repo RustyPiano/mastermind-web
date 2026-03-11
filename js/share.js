@@ -64,6 +64,34 @@ export function buildChallengeInviteText(variant) {
   ].join('\n');
 }
 
+export function isMobileShareEnvironment(navigatorObject = navigator) {
+  if (!navigatorObject) {
+    return false;
+  }
+
+  if (navigatorObject.userAgentData?.mobile === true) {
+    return true;
+  }
+
+  const userAgent = navigatorObject.userAgent ?? '';
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+}
+
+export function buildChallengeNativeSharePayload(url, variant, navigatorObject = navigator) {
+  const payload = {
+    title: '密码机 朋友挑战',
+    text: buildChallengeInviteText(variant),
+  };
+
+  if (isMobileShareEnvironment(navigatorObject)) {
+    payload.text = buildChallengeShareText(url, variant);
+    return payload;
+  }
+
+  payload.url = url;
+  return payload;
+}
+
 function isSupportedChallengeVariant(variant) {
   return variant !== 'daily' && Boolean(MODE_CONFIGS[variant]);
 }

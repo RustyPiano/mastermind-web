@@ -15,8 +15,8 @@ import {
   saveStats,
 } from './storage.js';
 import {
+  buildChallengeNativeSharePayload,
   shareResult,
-  buildChallengeInviteText,
   buildChallengeShareText,
   buildChallengeUrl,
   copyShareText,
@@ -223,15 +223,10 @@ async function generateChallenge() {
   const url = buildChallengeUrl(GameState.secretCode, undefined, {
     variant: GameState.variant,
   });
-  const shareText = buildChallengeInviteText(GameState.variant);
   const copyText = buildChallengeShareText(url, GameState.variant);
   try {
     if (navigator?.share) {
-      await navigator.share({
-        title: '密码机 朋友挑战',
-        text: shareText,
-        url,
-      });
+      await navigator.share(buildChallengeNativeSharePayload(url, GameState.variant));
       updateStatus('挑战链接分享成功');
     } else if (navigator?.clipboard?.writeText) {
       await copyShareText(copyText);
