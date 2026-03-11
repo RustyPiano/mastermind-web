@@ -14,7 +14,13 @@ import {
   saveSession,
   saveStats,
 } from './storage.js';
-import { shareResult, buildChallengeUrl } from './share.js';
+import {
+  shareResult,
+  buildChallengeInviteText,
+  buildChallengeShareText,
+  buildChallengeUrl,
+  copyShareText,
+} from './share.js';
 import { parseChallengePayload } from './share.js';
 import { buildFinishedResult } from './result.js';
 import {
@@ -217,16 +223,18 @@ async function generateChallenge() {
   const url = buildChallengeUrl(GameState.secretCode, undefined, {
     variant: GameState.variant,
   });
+  const shareText = buildChallengeInviteText(GameState.variant);
+  const copyText = buildChallengeShareText(url, GameState.variant);
   try {
     if (navigator?.share) {
       await navigator.share({
         title: '密码机 朋友挑战',
-        text: '我设置了一个密码，来破解吧！',
-        url: url
+        text: shareText,
+        url,
       });
       updateStatus('挑战链接分享成功');
     } else if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url);
+      await copyShareText(copyText);
       updateStatus('挑战链接已复制到剪贴板，快发给朋友吧！');
     } else {
       updateStatus('无法分享，请截图或手动告诉朋友');

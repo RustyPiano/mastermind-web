@@ -45,6 +45,25 @@ export function buildShareText(result) {
   ].join('\n');
 }
 
+export function buildChallengeShareText(url, variant) {
+  const modeLabel = getModeConfig(variant).label;
+
+  return [
+    `密码机 ${modeLabel} 好友挑战`,
+    '我设置了一个密码，来破解吧！',
+    url,
+  ].join('\n');
+}
+
+export function buildChallengeInviteText(variant) {
+  const modeLabel = getModeConfig(variant).label;
+
+  return [
+    `密码机 ${modeLabel} 好友挑战`,
+    '我设置了一个密码，来破解吧！',
+  ].join('\n');
+}
+
 function isSupportedChallengeVariant(variant) {
   return variant !== 'daily' && Boolean(MODE_CONFIGS[variant]);
 }
@@ -146,9 +165,12 @@ export async function copyShareText(text) {
 
 export async function shareResult(payload) {
   const text = buildShareText(payload);
+  const url = payload.isChallenge && payload.challengeUrl
+    ? payload.challengeUrl
+    : SITE_URL;
 
   if (navigator?.share) {
-    await navigator.share({ text, title: buildTitle(payload) });
+    await navigator.share({ text, title: buildTitle(payload), url });
     return { method: 'share', text };
   }
 

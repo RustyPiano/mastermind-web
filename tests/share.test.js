@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { buildShareText, feedbackToEmoji } from '../js/share.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  buildChallengeInviteText,
+  buildChallengeShareText,
+  buildShareText,
+  feedbackToEmoji,
+  shareResult,
+} from '../js/share.js';
 import { FEEDBACK } from '../js/engine.js';
 
 describe('feedbackToEmoji', () => {
@@ -91,5 +97,61 @@ describe('buildShareText', () => {
     expect(text).not.toContain('c2');
     expect(text).not.toContain('c3');
     expect(text).not.toContain('c4');
+  });
+});
+
+describe('buildChallengeShareText', () => {
+  it('includes the challenge url in copied challenge text', () => {
+    expect(buildChallengeShareText('https://mastermind.rustypiano.com/?challenge=abc', 'hard')).toBe([
+      '密码机 困难模式 好友挑战',
+      '我设置了一个密码，来破解吧！',
+      'https://mastermind.rustypiano.com/?challenge=abc',
+    ].join('\n'));
+  });
+});
+
+describe('buildChallengeInviteText', () => {
+  it('omits the url for system share payloads', () => {
+    expect(buildChallengeInviteText('hard')).toBe([
+      '密码机 困难模式 好友挑战',
+      '我设置了一个密码，来破解吧！',
+    ].join('\n'));
+  });
+});
+
+describe('shareResult', () => {
+  const originalNavigator = globalThis.navigator;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Object.defineProperty(globalThis, 'navigator', {
+      value: originalNavigator,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  it('passes the site url explicitly to navigator.share for normal results', async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { share },
+      configurable: true,
+      writable: true,
+    });
+
+    await shareResult({
+      mode: 'single',
+      variant: 'classic',
+      challengeKey: null,
+      rounds: 4,
+      maxGuesses: 10,
+      win: true,
+      history: [],
+    });
+
+    expect(share).toHaveBeenCalledWith(expect.objectContaining({
+      title: '密码机 经典模式',
+      url: 'https://mastermind.rustypiano.com/',
+    }));
   });
 });
