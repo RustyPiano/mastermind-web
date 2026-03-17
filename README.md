@@ -74,7 +74,7 @@ npm install
 npm test
 ```
 
-使用 [Vitest](https://vitest.dev/) 覆盖核心逻辑：游戏引擎、每日挑战生成、统计系统、状态持久化、分享文本、模式配置。
+使用 [Vitest](https://vitest.dev/) 覆盖核心逻辑；当前测试总数为 **100**，覆盖游戏引擎、每日挑战生成、好友挑战 URL 编码/解析、统计系统、成就解锁、状态持久化、分享文本、结果对象结构与模式配置。
 
 ## 📁 目录结构
 
@@ -94,16 +94,20 @@ npm test
 │   ├── daily.js            # 每日挑战：确定性种子生成
 │   ├── stats.js            # 统计与连胜逻辑
 │   ├── storage.js          # localStorage 持久化
-│   ├── share.js            # 分享文本构建
+│   ├── share.js            # 分享文本与挑战链接构建/解析
+│   ├── result.js           # 统一结果对象构建
 │   ├── ui.js               # DOM 渲染与 UI 交互
 │   └── game.js             # 游戏主逻辑与事件绑定入口
 └── tests/
     ├── engine.test.js
+    ├── challenge.test.js
     ├── daily.test.js
     ├── stats.test.js
+    ├── achievements.test.js
     ├── storage.test.js
     ├── share.test.js
-    └── mode-config.test.js
+    ├── mode-config.test.js
+    └── result.test.js
 ```
 
 ## 📄 许可
