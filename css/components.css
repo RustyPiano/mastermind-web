@@ -263,6 +263,30 @@
   cursor: pointer;
 }
 
+.seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-default);
+}
+
+.seo-links__item {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .seo-links__item:hover {
+    color: var(--text-primary);
+  }
+}
+
 .stats-section {
   display: flex;
   flex-direction: column;
@@ -361,6 +385,10 @@
 
   .stats-card__value {
     font-size: 14px;
+  }
+
+  .seo-links {
+    gap: 8px 12px;
   }
 }
 

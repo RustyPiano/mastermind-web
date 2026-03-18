@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="密码机玩法说明：了解 Mastermind 猜色解码游戏的目标、绿色与橙色反馈规则、推理思路、每日挑战机制和常见问题。">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://mastermind.rustypiano.com/how-to-play/">
+  <meta property="og:title" content="密码机玩法说明 - Mastermind 规则与反馈解释">
+  <meta property="og:description" content="快速了解密码机和 Mastermind 的规则、反馈点含义、玩法示例与常见问题。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mastermind.rustypiano.com/how-to-play/">
+  <meta property="og:site_name" content="密码机">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="密码机玩法说明 - Mastermind 规则与反馈解释">
+  <meta name="twitter:description" content="快速了解密码机和 Mastermind 的规则、反馈点含义、玩法示例与常见问题。">
+  <title>密码机玩法说明 - Mastermind 规则、反馈解释与常见问题</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "密码机玩法说明",
+      "url": "https://mastermind.rustypiano.com/how-to-play/",
+      "description": "密码机玩法说明页面，介绍 Mastermind 猜色解码游戏的规则、反馈点和推理方式。",
+      "inLanguage": "zh-CN"
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "密码机是什么游戏？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "密码机是一个基于经典 Mastermind 桌游规则的在线猜色解码游戏。玩家要在限定次数内，根据绿色、橙色和空点反馈推理出正确的颜色顺序。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "绿色点和橙色点分别代表什么？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "绿色点表示颜色和位置都正确，橙色点表示颜色正确但位置错误，空点表示该颜色不在密码中。反馈点只给出数量线索，不对应具体槽位。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "密码机支持重复颜色吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "默认的单人闯关和每日挑战不允许重复颜色，重复色模式则允许密码和猜测中出现重复颜色。"
+          }
+        }
+      ]
+    }
+  </script>
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/landing.css">
+</head>
+
+<body class="landing-body">
+  <header class="header landing-shell">
+    <nav class="landing-nav" aria-label="站点导航">
+      <a class="landing-nav__brand" href="/">密码机</a>
+      <a class="landing-nav__link" href="/how-to-play/">玩法说明</a>
+      <a class="landing-nav__link" href="/modes/">模式介绍</a>
+      <a class="landing-nav__link" href="/mastermind-online/">Mastermind online</a>
+    </nav>
+    <div class="landing-hero">
+      <p class="landing-kicker">How To Play</p>
+      <h1 class="landing-title">密码机玩法说明：Mastermind 规则、反馈解释与推理思路</h1>
+      <p class="landing-lead">密码机是一个在线 Mastermind 猜色解码游戏。目标是在限定次数内，根据每一轮反馈推理出正确的颜色组合与顺序。如果你第一次接触 Mastermind online，这一页就是最直接的入门说明。</p>
+      <div class="landing-inline-links">
+        <a href="/">立即开始游戏</a>
+        <a href="/modes/">查看全部模式</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="landing-shell landing-grid">
+    <article class="card landing-card">
+      <h2>密码机怎么玩？</h2>
+      <p>每局游戏会生成一个由 4 个或 5 个颜色槽位组成的密码。你需要从可选颜色池里选择颜色，提交猜测后，系统会用反馈点告诉你当前猜测离答案有多近。</p>
+      <p>核心目标很简单：<span class="landing-highlight">在限定回合内猜中所有槽位</span>。真正的难点在于如何利用每轮反馈去排除错误颜色、确认正确颜色、再调整顺序。</p>
+      <div class="landing-note">
+        密码机适合喜欢逻辑推理、排除法、桌游规则解谜和每日挑战的玩家。
+      </div>
+    </article>
+
+    <article class="card landing-card">
+      <h2>反馈点是什么意思？</h2>
+      <ul>
+        <li><span class="landing-highlight">绿色点</span>：颜色和位置都正确。</li>
+        <li><span class="landing-highlight">橙色点</span>：颜色正确，但位置错误。</li>
+        <li><span class="landing-highlight">空点</span>：该颜色不在密码中。</li>
+      </ul>
+      <p>反馈点只表示线索数量，不会告诉你是哪一个槽位对应哪一个结果。这也是 Mastermind 规则最关键的地方：你拿到的是“信息总量”，不是逐格提示。</p>
+    </article>
+
+    <article class="card landing-card">
+      <h2>一个简单的推理示例</h2>
+      <ol>
+        <li>第一轮先测试几种不同颜色，快速确认哪些颜色可能存在。</li>
+        <li>如果出现绿色点，优先保留该位置；如果出现橙色点，保留颜色但调整顺序。</li>
+        <li>当空点较多时，下一轮应减少无效颜色，把机会留给已验证的颜色组合。</li>
+      </ol>
+      <p>在密码机里，先确定“颜色是否存在”，再确定“颜色位置是否正确”，通常比一开始就频繁调换顺序更稳。</p>
+    </article>
+
+    <article class="card landing-card">
+      <h2>不同模式下规则有何不同？</h2>
+      <p>单人闯关和每日挑战默认不允许重复颜色；重复色模式允许密码和猜测都出现重复颜色；双人对战则由玩家一出题、玩家二破解。</p>
+      <p>如果你想看更完整的模式差异、颜色数和槽位数，可以继续看 <a href="/modes/">模式介绍页面</a>。</p>
+    </article>
+
+    <article class="card landing-card">
+      <h2>常见问题</h2>
+      <div class="landing-faq">
+        <section class="landing-faq__item">
+          <h3>密码机是什么游戏？</h3>
+          <p>密码机是基于经典 Mastermind 的在线猜色解码游戏。你需要根据反馈推理出正确的颜色组合和顺序。</p>
+        </section>
+        <section class="landing-faq__item">
+          <h3>每日挑战和普通模式有什么区别？</h3>
+          <p>每日挑战会为同一天的所有玩家生成同一题，并记录每日连胜；普通模式更适合练习、刷最佳步数或与朋友对战。</p>
+        </section>
+        <section class="landing-faq__item">
+          <h3>密码机会泄露答案吗？</h3>
+          <p>分享结果时不会公开颜色明文，只展示反馈进度。双人本地对战的密码会暂存在浏览器里，这是同设备玩法的已知设计限制。</p>
+        </section>
+      </div>
+    </article>
+
+    <article class="card landing-card">
+      <h2>下一步看什么？</h2>
+      <p>如果你已经了解基本规则，可以直接开始游戏，或者先浏览不同模式的节奏与难度差异。</p>
+      <div class="landing-inline-links">
+        <a href="/">返回首页开始游戏</a>
+        <a href="/modes/">查看模式介绍</a>
+        <a href="/mastermind-online/">了解密码机与 Mastermind online</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="landing-shell landing-footer">
+    <p><a href="/">返回密码机首页</a> · <a href="/modes/">模式介绍</a> · <a href="/mastermind-online/">Mastermind online</a></p>
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+# 密码机 (Mastermind)
+
+> 免费在线 Mastermind 猜色解码游戏，支持每日挑战、单人闯关、重复色模式和双人对战。
+
+Canonical: https://mastermind.rustypiano.com/
+
+## Pages
+
+- 首页（游戏入口）：https://mastermind.rustypiano.com/
+- 玩法说明：https://mastermind.rustypiano.com/how-to-play/
+- 模式介绍：https://mastermind.rustypiano.com/modes/
+- Mastermind online 介绍：https://mastermind.rustypiano.com/mastermind-online/
+
+## Site Summary
+
+密码机是一个浏览器内可直接游玩的颜色密码推理游戏。玩家需要在限定回合内，根据每轮返回的绿色、橙色和空点反馈，推理出正确的颜色组合与顺序。首页以实际游戏体验为主，规则、模式和概念说明分别放在独立静态页面中。
+
+## Best Sources For Citation
+
+- 玩法规则与反馈解释：/how-to-play/
+- 模式差异、难度和适合人群：/modes/
+- “Mastermind online / 在线 Mastermind”概念介绍：/mastermind-online/
+
+## Rules Snapshot
+
+- 绿色点：颜色和位置都正确。
+- 橙色点：颜色正确但位置错误。
+- 空点：该颜色不在密码中。
+- 反馈点只表示线索数量，不对应具体槽位。
+
+## Modes Snapshot
+
+- 每日挑战：同一天所有玩家同题，通关会计入每日连胜。
+- 单人闯关：包含入门、经典、困难、专家四档难度。
+- 重复色模式：允许重复颜色，推理难度更高。
+- 双人对战：支持一人出题、一人破解，也可生成挑战链接发给朋友。
+
+## Best Citation Summary
+
+密码机是一个免费的在线 Mastermind 网页游戏，适合喜欢逻辑推理、颜色密码和每日挑战的玩家。它提供固定题目的每日挑战、四档单人难度、允许重复色的高难变体，以及可分享链接的双人对战模式；首页用于直接游玩，独立页面用于解释规则、模式和玩法。
