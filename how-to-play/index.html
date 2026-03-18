@@ -72,23 +72,43 @@
   <header class="header landing-shell">
     <nav class="landing-nav" aria-label="站点导航">
       <a class="landing-nav__brand" href="/">密码机</a>
-      <a class="landing-nav__link" href="/how-to-play/">玩法说明</a>
-      <a class="landing-nav__link" href="/modes/">模式介绍</a>
-      <a class="landing-nav__link" href="/mastermind-online/">Mastermind online</a>
+      <div class="landing-nav__group">
+        <a class="landing-nav__link" href="/how-to-play/">玩法说明</a>
+        <a class="landing-nav__link" href="/modes/">模式介绍</a>
+        <a class="landing-nav__link" href="/mastermind-online/">Mastermind online</a>
+      </div>
+      <a class="landing-nav__cta" href="/">开始游戏</a>
     </nav>
     <div class="landing-hero">
-      <p class="landing-kicker">How To Play</p>
-      <h1 class="landing-title">密码机玩法说明：Mastermind 规则、反馈解释与推理思路</h1>
-      <p class="landing-lead">密码机是一个在线 Mastermind 猜色解码游戏。目标是在限定次数内，根据每一轮反馈推理出正确的颜色组合与顺序。如果你第一次接触 Mastermind online，这一页就是最直接的入门说明。</p>
-      <div class="landing-inline-links">
-        <a href="/">立即开始游戏</a>
-        <a href="/modes/">查看全部模式</a>
+      <div class="landing-hero__content">
+        <p class="landing-kicker">How To Play</p>
+        <h1 class="landing-title">密码机玩法说明：Mastermind 规则、反馈解释与推理思路</h1>
+        <p class="landing-lead">密码机是一个在线 Mastermind 猜色解码游戏。目标是在限定次数内，根据每一轮反馈推理出正确的颜色组合与顺序。如果你第一次接触 Mastermind online，这一页就是最直接的入门说明。</p>
+        <div class="landing-inline-links">
+          <a href="/">立即开始游戏</a>
+          <a href="/modes/">查看全部模式</a>
+        </div>
       </div>
+      <aside class="landing-hero__aside" aria-label="玩法说明速览">
+        <section class="landing-hero-card">
+          <div class="landing-hero-card__label">这页适合谁</div>
+          <p class="landing-hero-card__value">第一次接触密码机、想快速理解反馈规则，或者打算先看清玩法再进入每日挑战和单人闯关的玩家。</p>
+        </section>
+        <section class="landing-hero-card">
+          <div class="landing-hero-card__label">3 个核心要点</div>
+          <ul class="landing-checklist">
+            <li>先判断颜色是否存在，再判断位置。</li>
+            <li>绿色点和橙色点只给数量，不指向具体槽位。</li>
+            <li>不同模式只会改变难度参数，不改变基本推理逻辑。</li>
+          </ul>
+        </section>
+      </aside>
     </div>
   </header>
 
   <main class="landing-shell landing-grid">
-    <article class="card landing-card">
+    <article class="card landing-card landing-card--wide landing-card--accent">
+      <p class="landing-section-label">规则基础</p>
       <h2>密码机怎么玩？</h2>
       <p>每局游戏会生成一个由 4 个或 5 个颜色槽位组成的密码。你需要从可选颜色池里选择颜色，提交猜测后，系统会用反馈点告诉你当前猜测离答案有多近。</p>
       <p>核心目标很简单：<span class="landing-highlight">在限定回合内猜中所有槽位</span>。真正的难点在于如何利用每轮反馈去排除错误颜色、确认正确颜色、再调整顺序。</p>
@@ -97,7 +117,8 @@
       </div>
     </article>
 
-    <article class="card landing-card">
+    <article class="card landing-card landing-card--muted">
+      <p class="landing-section-label">反馈机制</p>
       <h2>反馈点是什么意思？</h2>
       <ul>
         <li><span class="landing-highlight">绿色点</span>：颜色和位置都正确。</li>
@@ -108,6 +129,7 @@
     </article>
 
     <article class="card landing-card">
+      <p class="landing-section-label">推理节奏</p>
       <h2>一个简单的推理示例</h2>
       <ol>
         <li>第一轮先测试几种不同颜色，快速确认哪些颜色可能存在。</li>
@@ -117,13 +139,15 @@
       <p>在密码机里，先确定“颜色是否存在”，再确定“颜色位置是否正确”，通常比一开始就频繁调换顺序更稳。</p>
     </article>
 
-    <article class="card landing-card">
+    <article class="card landing-card landing-card--wide">
+      <p class="landing-section-label">模式差异</p>
       <h2>不同模式下规则有何不同？</h2>
       <p>单人闯关和每日挑战默认不允许重复颜色；重复色模式允许密码和猜测都出现重复颜色；双人对战则由玩家一出题、玩家二破解。</p>
       <p>如果你想看更完整的模式差异、颜色数和槽位数，可以继续看 <a href="/modes/">模式介绍页面</a>。</p>
     </article>
 
-    <article class="card landing-card">
+    <article class="card landing-card landing-card--wide">
+      <p class="landing-section-label">常见问题</p>
       <h2>常见问题</h2>
       <div class="landing-faq">
         <section class="landing-faq__item">
@@ -141,7 +165,8 @@
       </div>
     </article>
 
-    <article class="card landing-card">
+    <article class="card landing-card landing-card--full landing-card--accent">
+      <p class="landing-section-label">下一步</p>
       <h2>下一步看什么？</h2>
       <p>如果你已经了解基本规则，可以直接开始游戏，或者先浏览不同模式的节奏与难度差异。</p>
       <div class="landing-inline-links">
