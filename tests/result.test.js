@@ -10,6 +10,9 @@ describe('buildFinishedResult', () => {
       challengeKey: null,
       isChallenge: true,
       challengeUrl: 'https://mastermind.rustypiano.com/?challenge=abc',
+      challengeSource: 'shared_link',
+      challengeTargetRounds: 4,
+      isDailyPractice: false,
       activeConfig: { maxGuesses: 12 },
       guessHistory: [
         { feedback: [FEEDBACK.NONE, FEEDBACK.NONE, FEEDBACK.NONE, FEEDBACK.NONE, FEEDBACK.NONE] },
@@ -26,6 +29,9 @@ describe('buildFinishedResult', () => {
       challengeKey: null,
       isChallenge: true,
       challengeUrl: 'https://mastermind.rustypiano.com/?challenge=abc',
+      challengeSource: 'shared_link',
+      challengeTargetRounds: 4,
+      isDailyPractice: false,
       rounds: 12,
       win: true,
       history: [

@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildDailyModeEntryState,
+  CHALLENGE_TIME_ZONE,
   createSeededRng,
   dateToChallengeKey,
+  formatChallengeCountdown,
   generateDailySecret,
+  getDailySessionType,
+  getTimeUntilNextChallenge,
   hashStringToSeed,
   isDailySessionForKey,
 } from '../js/daily.js';
@@ -14,6 +19,113 @@ describe('dateToChallengeKey', () => {
 
     expect(dateToChallengeKey(date, 'Asia/Shanghai')).toBe('2026-03-11');
     expect(dateToChallengeKey(date, 'America/Los_Angeles')).toBe('2026-03-10');
+  });
+
+  it('defaults to the fixed product timezone', () => {
+    const date = new Date('2026-03-10T16:30:00.000Z');
+
+    expect(CHALLENGE_TIME_ZONE).toBe('Asia/Shanghai');
+    expect(dateToChallengeKey(date)).toBe('2026-03-11');
+  });
+});
+
+describe('getTimeUntilNextChallenge', () => {
+  it('counts down to the next midnight in the fixed challenge timezone', () => {
+    const date = new Date('2026-03-10T15:30:00.000Z');
+
+    expect(getTimeUntilNextChallenge(date)).toBe(30 * 60 * 1000);
+  });
+});
+
+describe('formatChallengeCountdown', () => {
+  it('formats remaining time as HH:MM:SS', () => {
+    expect(formatChallengeCountdown((2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (9 * 1000))).toBe('02:05:09');
+  });
+});
+
+describe('buildDailyModeEntryState', () => {
+  it('marks an unfinished saved game as in progress', () => {
+    expect(buildDailyModeEntryState({
+      challengeKey: '2026-03-10',
+      activeSessionType: 'official',
+      dailyResult: null,
+      msUntilNextChallenge: 60 * 60 * 1000,
+    })).toMatchObject({
+      status: 'in_progress',
+      buttonText: '继续每日挑战',
+    });
+  });
+
+  it('marks a practice resume separately from an official run', () => {
+    expect(buildDailyModeEntryState({
+      challengeKey: '2026-03-10',
+      activeSessionType: 'practice',
+      dailyResult: { status: 'lost' },
+      msUntilNextChallenge: 60 * 60 * 1000,
+    })).toMatchObject({
+      status: 'practice_in_progress',
+      buttonText: '继续今日练习',
+    });
+  });
+
+  it('distinguishes won and lost official daily outcomes', () => {
+    expect(buildDailyModeEntryState({
+      challengeKey: '2026-03-10',
+      activeSessionType: null,
+      dailyResult: { status: 'won' },
+      msUntilNextChallenge: 60 * 60 * 1000,
+    })).toMatchObject({
+      status: 'won',
+      buttonText: '每日挑战',
+    });
+
+    expect(buildDailyModeEntryState({
+      challengeKey: '2026-03-10',
+      activeSessionType: null,
+      dailyResult: { status: 'lost' },
+      msUntilNextChallenge: 60 * 60 * 1000,
+    })).toMatchObject({
+      status: 'lost',
+      buttonText: '今日练习',
+    });
+  });
+});
+
+describe('getDailySessionType', () => {
+  it('returns official or practice for matching daily sessions', () => {
+    expect(getDailySessionType({
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      isDailyPractice: false,
+      status: 'in_progress',
+    }, '2026-03-10')).toBe('official');
+
+    expect(getDailySessionType({
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      isDailyPractice: true,
+      status: 'in_progress',
+    }, '2026-03-10')).toBe('practice');
+  });
+
+  it('returns null for non-matching or finished sessions', () => {
+    expect(getDailySessionType({
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-09',
+      isDailyPractice: true,
+      status: 'in_progress',
+    }, '2026-03-10')).toBeNull();
+
+    expect(getDailySessionType({
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      isDailyPractice: true,
+      status: 'won',
+    }, '2026-03-10')).toBeNull();
   });
 });
 

@@ -105,6 +105,10 @@
               <span>🟢 颜色和位置都正确</span>
               <span>🟠 颜色正确但位置错误</span>
             </div>
+            <div class="btn-row onboarding-card__actions">
+              <button class="btn btn-primary" id="btnStartStarter" type="button">先玩入门模式</button>
+              <button class="btn btn-secondary" id="btnBrowseModes" type="button">查看模式</button>
+            </div>
           </div>
           <div class="stats-summary" aria-live="polite">
             <div class="stats-summary__line" id="statsSummaryLine">已玩 0 局 · 单人最佳 - · 每日连胜 0</div>
@@ -201,6 +205,16 @@
         </div>
         <button class="btn btn-primary" id="btnStartGuessing" type="button">玩家二准备好了 →</button>
         <button class="btn btn-secondary" id="btnGenerateChallenge" type="button">生成挑战链接</button>
+        <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
+      </div>
+
+      <div class="screen" id="screenChallengeIntro">
+        <div class="card text-center">
+          <div class="card-title" id="challengeIntroTitle">好友挑战</div>
+          <div class="lock-icon">🎯</div>
+          <p class="lock-text" id="challengeIntroBody">朋友留下了一道密码，来破解吧。</p>
+        </div>
+        <button class="btn btn-primary" id="btnStartChallenge" type="button">开始挑战</button>
         <button class="btn btn-secondary btn-exit-home" type="button">返回主页</button>
       </div>
 

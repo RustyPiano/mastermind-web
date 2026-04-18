@@ -5,6 +5,7 @@ import {
   buildStatsPanelSections,
   getAverageRounds,
   getBestSinglePreset,
+  getDailyChallengeResult,
   getModeWinRate,
   normalizeStats,
   ACHIEVEMENTS,
@@ -268,20 +269,25 @@ export function showResult(win, rounds) {
   const isSingleMode = GameState.mode === 'single';
   const winnerText = isSingleMode ? '你' : '玩家二';
   const modeLabel = GameState.mode === 'dual' ? '双人对战' : getModeConfig(GameState.variant).label;
+  const dailyLabel = GameState.isDailyPractice ? '今日练习' : modeLabel;
   const resultLabel = GameState.variant === 'daily'
-    ? `${modeLabel} · ${GameState.challengeKey}`
+    ? `${dailyLabel} · ${GameState.challengeKey}`
     : modeLabel;
   const roundText = rounds ? `<strong>${rounds}</strong> 次` : `${GameState.activeConfig.maxGuesses} 次`;
   let summaryText = '';
 
   if (win) {
-    if (GameState.variant === 'daily') {
+    if (GameState.variant === 'daily' && GameState.isDailyPractice) {
+      summaryText = `${winnerText}用了 ${roundText} 复盘了今天这题。`;
+    } else if (GameState.variant === 'daily') {
       summaryText = `${winnerText}用了 ${roundText} 完成今天这题。`;
     } else if (GameState.variant === 'duplicates') {
       summaryText = `${winnerText}用了 ${roundText} 破解重复色规则。`;
     } else {
       summaryText = `${winnerText}用了 ${roundText} 破解了密码。`;
     }
+  } else if (GameState.variant === 'daily' && GameState.isDailyPractice) {
+    summaryText = `${winnerText}这次还没复盘成功，再试一次。`;
   } else if (GameState.variant === 'daily') {
     summaryText = `${winnerText}没能在 ${roundText} 内完成今天这题。`;
   } else if (GameState.variant === 'duplicates') {
@@ -291,7 +297,9 @@ export function showResult(win, rounds) {
   }
 
   let coachText = '';
-  if (win && GameState.mode !== 'dual') {
+  if (GameState.variant === 'daily' && GameState.isDailyPractice) {
+    coachText = `\n\n<span style="color:var(--text-muted);">今日练习不会覆盖今天的正式成绩。</span>`;
+  } else if (win && GameState.mode !== 'dual') {
     // Generate coach evaluation for single player modes based on attempts
     if (rounds <= 3) {
       coachText = `\n\n<span style="color:var(--accent-primary);">S级评价：神机妙算！你简直是福尔摩斯！</span>`;
@@ -329,7 +337,15 @@ export function showResult(win, rounds) {
   // Daily mode is once-per-day: relabel "再来一局" so user knows it will start a classic game
   const playAgainBtn = document.getElementById('btnPlayAgain');
   if (playAgainBtn) {
-    playAgainBtn.textContent = GameState.variant === 'daily' ? '试试经典模式' : '再来一局';
+    if (GameState.variant === 'daily' && GameState.isDailyPractice) {
+      playAgainBtn.textContent = '再练一次';
+    } else if (GameState.variant === 'daily' && !win) {
+      playAgainBtn.textContent = '继续今日练习';
+    } else if (GameState.variant === 'daily') {
+      playAgainBtn.textContent = '试试经典模式';
+    } else {
+      playAgainBtn.textContent = '再来一局';
+    }
   }
 }
 
@@ -366,15 +382,17 @@ export function setShareButtonEnabled(enabled) {
   button.disabled = !enabled;
 }
 
-export function applyModeLabels(mode, variant = 'classic', challengeKey = null) {
+export function applyModeLabels(mode, variant = 'classic', challengeKey = null, options = {}) {
   const setupTitle = document.getElementById('setupTitle');
   const guessTitle = document.getElementById('guessTitle');
   if (!setupTitle || !guessTitle) return;
   const modeLabel = getModeConfig(variant).label;
+  const isDailyPractice = options.isDailyPractice ?? false;
 
   if (mode === 'single' && variant === 'daily') {
-    setupTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
-    guessTitle.textContent = `每日挑战 · ${challengeKey ?? ''}`.trim();
+    const titlePrefix = isDailyPractice ? '今日练习' : '每日挑战';
+    setupTitle.textContent = `${titlePrefix} · ${challengeKey ?? ''}`.trim();
+    guessTitle.textContent = `${titlePrefix} · ${challengeKey ?? ''}`.trim();
   } else if (mode === 'single' && variant === 'duplicates') {
     setupTitle.textContent = '重复色模式 · 电脑已生成密码';
     guessTitle.textContent = '重复色模式 · 允许重复颜色';
@@ -387,21 +405,13 @@ export function applyModeLabels(mode, variant = 'classic', challengeKey = null) 
   }
 }
 
-export function updateDailyModeEntry({ challengeKey, isCompleted, hasActiveSession }) {
+export function updateDailyModeEntry({ buttonText, metaText }) {
   const button = document.getElementById('btnModeDaily');
   const meta = document.getElementById('dailyModeMeta');
   if (!button || !meta) return;
 
-  if (hasActiveSession) {
-    button.textContent = '继续每日挑战';
-    meta.textContent = `继续 ${challengeKey} 的进度，保住你的每日连胜。`;
-    return;
-  }
-
-  button.textContent = '每日挑战';
-  meta.textContent = isCompleted
-    ? `${challengeKey} 已完成 ✓，明天继续冲击连胜。`
-    : `${challengeKey} 今日题目，通关后会记入每日连胜。`;
+  button.textContent = buttonText;
+  meta.textContent = metaText;
 }
 
 export function renderStatsPanel(stats) {
@@ -520,33 +530,46 @@ export function renderStatsPanel(stats) {
   panel.appendChild(achievementsEl);
 }
 
-export function renderResultStats(stats, result) {
-  const target = document.getElementById('overlayStats');
-  if (!target || !stats || !result) return;
+export function buildResultStatsText(stats, result) {
+  if (!stats || !result) return '';
   const safeStats = normalizeStats(stats);
 
   if (result.variant === 'daily') {
+    if (result.isDailyPractice) {
+      const average = getAverageRounds(safeStats.modes.daily);
+      const officialDailyResult = getDailyChallengeResult(safeStats, result.challengeKey);
+      const officialSummary = officialDailyResult?.status === 'won'
+        ? '正式记录：今日挑战已完成'
+        : '正式记录：今天这题还没拿下';
+
+      return `今日练习不计入正式成绩\n${officialSummary}\n最佳 ${safeStats.modes.daily.bestRounds === null ? '-' : `${safeStats.modes.daily.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(safeStats.modes.daily)}%\n当前每日连胜 ${safeStats.streaks.currentDailyWin} · 最佳 ${safeStats.streaks.bestDailyWin}`;
+    }
+
     const average = getAverageRounds(safeStats.modes.daily);
-    target.textContent = `${result.win ? '今日挑战已完成' : '今天这题还没拿下'}\n最佳 ${safeStats.modes.daily.bestRounds === null ? '-' : `${safeStats.modes.daily.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(safeStats.modes.daily)}%\n当前每日连胜 ${safeStats.streaks.currentDailyWin} · 最佳 ${safeStats.streaks.bestDailyWin}`;
-    return;
+    return `${result.win ? '今日挑战已完成' : '今天这题还没拿下'}\n最佳 ${safeStats.modes.daily.bestRounds === null ? '-' : `${safeStats.modes.daily.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(safeStats.modes.daily)}%\n当前每日连胜 ${safeStats.streaks.currentDailyWin} · 最佳 ${safeStats.streaks.bestDailyWin}`;
   }
 
   if (result.mode === 'single' && result.variant !== 'duplicates') {
     const modeStats = safeStats.modes?.[result.variant];
     const modeLabel = getModeConfig(result.variant).label;
     const average = getAverageRounds(modeStats);
-    target.textContent = `${modeLabel}最佳 ${modeStats?.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
-    return;
+    return `${modeLabel}最佳 ${modeStats?.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
   }
 
   if (result.variant === 'duplicates') {
     const modeStats = safeStats.modes.duplicates;
     const average = getAverageRounds(modeStats);
-    target.textContent = `重复色模式最佳 ${modeStats.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
-    return;
+    return `重复色模式最佳 ${modeStats.bestRounds === null ? '-' : `${modeStats.bestRounds}步`} · 平均 ${average === null ? '-' : `${average.toFixed(1)}步`} · 胜率 ${getModeWinRate(modeStats)}%`;
   }
 
-  target.textContent = `累计双人对战 ${safeStats.modes.dual.gamesPlayed} 局`;
+  return `累计双人对战 ${safeStats.modes.dual.gamesPlayed} 局`;
+}
+
+export function renderResultStats(stats, result) {
+  const target = document.getElementById('overlayStats');
+  if (!target) return;
+
+  target.textContent = buildResultStatsText(stats, result);
 }
 
 export function setStatsPanelExpanded(expanded) {

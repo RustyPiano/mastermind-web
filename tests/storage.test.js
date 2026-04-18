@@ -42,6 +42,9 @@ function makeSession() {
     challengeKey: null,
     isChallenge: false,
     challengeUrl: null,
+    challengeSource: null,
+    challengeTargetRounds: null,
+    isDailyPractice: false,
     secretCode: ['c1', 'c2', 'c3', 'c4'],
     currentGuess: ['c1', null, null, null],
     guessHistory: [
@@ -122,9 +125,12 @@ describe('storage helpers', () => {
       variant: 'hard',
       isChallenge: true,
       challengeUrl: 'https://mastermind.rustypiano.com/?challenge=abc123',
+      challengeSource: 'shared_link',
+      challengeTargetRounds: 4,
       secretCode: ['c1', 'c2', 'c3', 'c4', 'c5'],
       currentGuess: ['c1', 'c2', null, null, null],
       guessHistory: [],
+      screenId: 'screenChallengeIntro',
     };
 
     GameState.restore(session);
@@ -132,14 +138,43 @@ describe('storage helpers', () => {
 
     expect(snapshot.isChallenge).toBe(true);
     expect(snapshot.challengeUrl).toBe(session.challengeUrl);
+    expect(snapshot.challengeSource).toBe('shared_link');
+    expect(snapshot.challengeTargetRounds).toBe(4);
 
     GameState.reset();
     expect(GameState.isChallenge).toBe(false);
     expect(GameState.challengeUrl).toBeNull();
+    expect(GameState.challengeSource).toBeNull();
+    expect(GameState.challengeTargetRounds).toBeNull();
 
     GameState.restore(snapshot);
     expect(GameState.isChallenge).toBe(true);
     expect(GameState.challengeUrl).toBe(session.challengeUrl);
+    expect(GameState.challengeSource).toBe('shared_link');
+    expect(GameState.challengeTargetRounds).toBe(4);
+    expect(GameState.screenId).toBe('screenChallengeIntro');
+  });
+
+  it('preserves daily practice sessions through snapshot and restore', () => {
+    const session = {
+      ...makeSession(),
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      isDailyPractice: true,
+      screenId: 'screenGuess',
+    };
+
+    GameState.restore(session);
+    const snapshot = createSessionSnapshot(GameState);
+
+    expect(snapshot.isDailyPractice).toBe(true);
+
+    GameState.reset();
+    expect(GameState.isDailyPractice).toBe(false);
+
+    GameState.restore(snapshot);
+    expect(GameState.isDailyPractice).toBe(true);
+    expect(GameState.challengeKey).toBe('2026-03-10');
   });
 
   it('returns null and clears malformed saved session payloads', () => {
@@ -190,6 +225,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: [],
       lastDailyPlayedKey: null,
+      dailyResults: {},
       achievements: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: false });
@@ -212,6 +248,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: ['2026-03-10'],
       lastDailyPlayedKey: null,
+      dailyResults: {},
       achievements: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: true });
@@ -238,6 +275,7 @@ describe('storage helpers', () => {
       },
       completedDailyKeys: ['2026-03-10'],
       lastDailyPlayedKey: null,
+      dailyResults: {},
       achievements: [],
     });
   });

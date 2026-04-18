@@ -64,6 +64,7 @@ export function createDefaultStats() {
     },
     completedDailyKeys: [],
     lastDailyPlayedKey: null,
+    dailyResults: {},
     achievements: [],
   };
 }
@@ -112,6 +113,18 @@ export function normalizeStats(stats) {
       ? [...stats.completedDailyKeys]
       : [],
     lastDailyPlayedKey: stats.lastDailyPlayedKey ?? null,
+    dailyResults: Object.fromEntries(
+      Object.entries(stats.dailyResults ?? {})
+        .filter(([, result]) => result && (result.status === 'won' || result.status === 'lost'))
+        .map(([challengeKey, result]) => [
+          challengeKey,
+          {
+            status: result.status,
+            rounds: Number.isFinite(result.rounds) ? result.rounds : null,
+            finishedAt: typeof result.finishedAt === 'string' ? result.finishedAt : null,
+          },
+        ]),
+    ),
     achievements: Array.isArray(stats.achievements)
       ? [...stats.achievements]
       : [],
@@ -142,6 +155,15 @@ function addCompletedDailyKey(keys, challengeKey) {
 export function hasCompletedDaily(stats, challengeKey) {
   return Array.isArray(stats?.completedDailyKeys)
     && stats.completedDailyKeys.includes(challengeKey);
+}
+
+export function getDailyChallengeResult(stats, challengeKey) {
+  if (!challengeKey) {
+    return null;
+  }
+
+  const safeStats = normalizeStats(stats);
+  return safeStats.dailyResults[challengeKey] ?? null;
 }
 
 export function getAverageRounds(modeStats) {
@@ -301,6 +323,14 @@ export function recordGameResult(stats, result) {
   }
 
   if (isDaily) {
+    if (result.challengeKey) {
+      nextStats.dailyResults[result.challengeKey] = {
+        status: result.win ? 'won' : 'lost',
+        rounds: result.rounds,
+        finishedAt: result.finishedAt ?? null,
+      };
+    }
+
     nextStats.completedDailyKeys = addCompletedDailyKey(
       nextStats.completedDailyKeys,
       result.challengeKey,

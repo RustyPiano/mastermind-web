@@ -5,6 +5,9 @@ export function buildFinishedResult(state, { win, rounds }) {
     challengeKey: state.challengeKey,
     isChallenge: state.isChallenge,
     challengeUrl: state.challengeUrl,
+    challengeSource: state.challengeSource ?? null,
+    challengeTargetRounds: state.challengeTargetRounds ?? null,
+    isDailyPractice: Boolean(state.isDailyPractice),
     rounds,
     win,
     history: state.guessHistory.map((entry) => ({

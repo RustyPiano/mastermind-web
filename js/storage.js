@@ -43,6 +43,9 @@ function isValidSessionShape(data) {
     && (typeof data.challengeKey === 'string' || data.challengeKey === null)
     && typeof data.isChallenge === 'boolean'
     && (typeof data.challengeUrl === 'string' || data.challengeUrl === null)
+    && (typeof data.challengeSource === 'string' || data.challengeSource === null || data.challengeSource === undefined)
+    && (typeof data.challengeTargetRounds === 'number' || data.challengeTargetRounds === null || data.challengeTargetRounds === undefined)
+    && (typeof data.isDailyPractice === 'boolean' || data.isDailyPractice === undefined)
     && Array.isArray(data.secretCode)
     && Array.isArray(data.currentGuess)
     && Array.isArray(data.guessHistory)
@@ -94,6 +97,9 @@ export function createSessionSnapshot(state) {
     challengeKey: state.challengeKey ?? null,
     isChallenge: Boolean(state.isChallenge),
     challengeUrl: state.challengeUrl ?? null,
+    challengeSource: state.challengeSource ?? null,
+    challengeTargetRounds: state.challengeTargetRounds ?? null,
+    isDailyPractice: Boolean(state.isDailyPractice),
     secretCode: cloneSlots(state.secretCode),
     currentGuess: cloneSlots(state.currentGuess),
     guessHistory: cloneHistory(state.guessHistory),
@@ -114,6 +120,9 @@ export function saveSession(session) {
     challengeKey: session.challengeKey ?? null,
     isChallenge: Boolean(session.isChallenge),
     challengeUrl: session.challengeUrl ?? null,
+    challengeSource: session.challengeSource ?? null,
+    challengeTargetRounds: session.challengeTargetRounds ?? null,
+    isDailyPractice: Boolean(session.isDailyPractice),
     version: STORAGE_VERSION,
   });
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildShareText, buildChallengeUrl, parseChallengePayload } from '../js/share.js';
+import {
+    buildChallengeIntroContent,
+    buildShareText,
+    buildChallengeUrl,
+    parseChallengePayload,
+} from '../js/share.js';
 import { FEEDBACK } from '../js/engine.js';
 
 describe('buildChallengeUrl', () => {
@@ -17,13 +22,32 @@ describe('buildChallengeUrl', () => {
         const encoded = url.split('?challenge=')[1];
         const decoded = JSON.parse(atob(encoded));
         expect(decoded).toEqual({
-            v: 1,
+            v: 2,
             m: 'classic',
             s: secret,
         });
         expect(parseChallengePayload(encoded)).toEqual({
             secretCode: secret,
             variant: 'classic',
+            challengeSource: null,
+            challengeTargetRounds: null,
+        });
+    });
+
+    it('supports optional challenge metadata in v2 payloads', () => {
+        const secret = ['c1', 'c2', 'c3', 'c4'];
+        const url = buildChallengeUrl(secret, baseUrl, {
+            variant: 'classic',
+            source: 'result_share',
+            targetRounds: 4,
+        });
+        const encoded = url.split('?challenge=')[1];
+
+        expect(parseChallengePayload(encoded)).toEqual({
+            secretCode: secret,
+            variant: 'classic',
+            challengeSource: 'result_share',
+            challengeTargetRounds: 4,
         });
     });
 
@@ -46,6 +70,8 @@ describe('buildChallengeUrl', () => {
         expect(parseChallengePayload(encoded)).toEqual({
             secretCode: secret,
             variant: 'hard',
+            challengeSource: null,
+            challengeTargetRounds: null,
         });
     });
 
@@ -55,6 +81,8 @@ describe('buildChallengeUrl', () => {
         expect(parseChallengePayload(encoded)).toEqual({
             secretCode: ['c1', 'c2', 'c3', 'c4'],
             variant: 'classic',
+            challengeSource: null,
+            challengeTargetRounds: null,
         });
     });
 
@@ -65,6 +93,30 @@ describe('buildChallengeUrl', () => {
         expect(parseChallengePayload('not-base64')).toBeNull();
         expect(parseChallengePayload(invalidClassicLength)).toBeNull();
         expect(parseChallengePayload(invalidVariant)).toBeNull();
+    });
+});
+
+describe('buildChallengeIntroContent', () => {
+    it('uses a comparison prompt when the inviter score is available', () => {
+        expect(buildChallengeIntroContent({
+            variant: 'classic',
+            challengeTargetRounds: 4,
+        })).toMatchObject({
+            title: '经典模式 好友挑战',
+            body: '朋友用了 4 步。你能更少吗？',
+            actionLabel: '开始挑战',
+        });
+    });
+
+    it('falls back to a generic prompt without inviter score', () => {
+        expect(buildChallengeIntroContent({
+            variant: 'hard',
+            challengeTargetRounds: null,
+        })).toMatchObject({
+            title: '困难模式 好友挑战',
+            body: '朋友留下了一道密码，来破解吧。',
+            actionLabel: '开始挑战',
+        });
     });
 });
 

@@ -3,7 +3,7 @@ import { getAvailableColors } from './constants.js';
 import { getModeConfig, MODE_CONFIGS } from './mode-config.js';
 
 const SITE_URL = 'https://mastermind.rustypiano.com/';
-const CHALLENGE_PAYLOAD_VERSION = 1;
+const CHALLENGE_PAYLOAD_VERSION = 2;
 const DEFAULT_CHALLENGE_VARIANT = 'classic';
 
 export function feedbackToEmoji(value) {
@@ -13,6 +13,10 @@ export function feedbackToEmoji(value) {
 }
 
 function buildTitle(result) {
+  if (result.variant === 'daily' && result.isDailyPractice) {
+    return `密码机 今日练习 ${result.challengeKey}`;
+  }
+
   if (result.variant === 'daily') {
     return `密码机 每日挑战 ${result.challengeKey}`;
   }
@@ -62,6 +66,18 @@ export function buildChallengeInviteText(variant) {
     `密码机 ${modeLabel} 好友挑战`,
     '我设置了一个密码，来破解吧！',
   ].join('\n');
+}
+
+export function buildChallengeIntroContent({ variant, challengeTargetRounds = null }) {
+  const modeLabel = getModeConfig(variant).label;
+
+  return {
+    title: `${modeLabel} 好友挑战`,
+    body: Number.isFinite(challengeTargetRounds)
+      ? `朋友用了 ${challengeTargetRounds} 步。你能更少吗？`
+      : '朋友留下了一道密码，来破解吧。',
+    actionLabel: '开始挑战',
+  };
 }
 
 export function isMobileShareEnvironment(navigatorObject = navigator) {
@@ -140,10 +156,12 @@ export function parseChallengePayload(challengeParam) {
       return {
         secretCode: [...decoded.s],
         variant: DEFAULT_CHALLENGE_VARIANT,
+        challengeSource: null,
+        challengeTargetRounds: null,
       };
     }
 
-    if (decoded.v !== CHALLENGE_PAYLOAD_VERSION || typeof decoded.m !== 'string') {
+    if ((decoded.v !== 1 && decoded.v !== CHALLENGE_PAYLOAD_VERSION) || typeof decoded.m !== 'string') {
       return null;
     }
 
@@ -154,6 +172,8 @@ export function parseChallengePayload(challengeParam) {
     return {
       secretCode: [...decoded.s],
       variant: decoded.m,
+      challengeSource: typeof decoded.src === 'string' ? decoded.src : null,
+      challengeTargetRounds: Number.isFinite(decoded.r) ? decoded.r : null,
     };
   } catch {
     return null;
@@ -173,6 +193,8 @@ export function buildChallengeUrl(secretCode, currentSiteUrl = window.location.h
     v: CHALLENGE_PAYLOAD_VERSION,
     m: variant,
     s: secretCode,
+    ...(typeof options.source === 'string' ? { src: options.source } : {}),
+    ...(Number.isFinite(options.targetRounds) ? { r: options.targetRounds } : {}),
   });
 
   // Use btoa to create a base64 encoded string

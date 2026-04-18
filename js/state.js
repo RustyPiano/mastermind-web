@@ -22,6 +22,9 @@ export const GameState = {
   challengeKey: null,
   isChallenge: false,
   challengeUrl: null,
+  challengeSource: null,
+  challengeTargetRounds: null,
+  isDailyPractice: false,
   secretCode: createEmptySlots(getModeConfig(DEFAULT_MODE_ID).codeLength),
   currentGuess: createEmptySlots(getModeConfig(DEFAULT_MODE_ID).codeLength),
   guessHistory: [],
@@ -179,6 +182,9 @@ export const GameState = {
       challengeKey: data.challengeKey ?? null,
       isChallenge: data.isChallenge ?? false,
       challengeUrl: data.challengeUrl ?? null,
+      challengeSource: data.challengeSource ?? null,
+      challengeTargetRounds: Number.isFinite(data.challengeTargetRounds) ? data.challengeTargetRounds : null,
+      isDailyPractice: data.isDailyPractice ?? false,
       secretCode: normalizeSlots(data.secretCode, codeLength),
       currentGuess: normalizeSlots(data.currentGuess, codeLength),
       guessHistory: data.guessHistory.map((entry) => ({
@@ -202,6 +208,9 @@ export const GameState = {
     this.challengeKey = null;
     this.isChallenge = false;
     this.challengeUrl = null;
+    this.challengeSource = null;
+    this.challengeTargetRounds = null;
+    this.isDailyPractice = false;
     this.secretCode = createEmptySlots(this.activeConfig.codeLength);
     this.currentGuess = createEmptySlots(this.activeConfig.codeLength);
     this.guessHistory = [];

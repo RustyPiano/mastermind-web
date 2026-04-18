@@ -30,6 +30,7 @@ describe('buildShareText', () => {
       mode: 'single',
       variant: 'daily',
       challengeKey: '2026-03-10',
+      isDailyPractice: false,
       rounds: 4,
       maxGuesses: 10,
       win: true,
@@ -87,6 +88,7 @@ describe('buildShareText', () => {
       mode: 'single',
       variant: 'daily',
       challengeKey: '2026-03-10',
+      isDailyPractice: false,
       rounds: 3,
       maxGuesses: 10,
       win: true,
@@ -99,6 +101,19 @@ describe('buildShareText', () => {
     expect(text).not.toContain('c2');
     expect(text).not.toContain('c3');
     expect(text).not.toContain('c4');
+  });
+
+  it('uses a practice-specific title for daily practice results', () => {
+    expect(buildShareText({
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-03-10',
+      isDailyPractice: true,
+      rounds: 5,
+      maxGuesses: 10,
+      win: true,
+      history: [],
+    })).toContain('密码机 今日练习 2026-03-10');
   });
 });
 

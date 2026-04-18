@@ -216,6 +216,17 @@
   font-size: var(--text-sm);
 }
 
+.onboarding-card__actions {
+  margin-top: 12px;
+}
+
+.status-tip {
+  display: inline-block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
 .stats-panel {
   display: flex;
   flex-direction: column;

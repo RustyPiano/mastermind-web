@@ -97,6 +97,10 @@ describe('recordGameResult', () => {
 
     expect(stats.streaks.currentDailyWin).toBe(0);
     expect(stats.streaks.bestDailyWin).toBe(1);
+    expect(stats.dailyResults['2026-03-11']).toMatchObject({
+      status: 'lost',
+      rounds: 10,
+    });
   });
 
   it('resets the daily streak when days are not consecutive', () => {
@@ -198,6 +202,10 @@ describe('recordGameResult', () => {
 
     expect(stats.totals.gamesPlayed).toBe(1);
     expect(stats.modes.daily.gameCount).toBe(1);
+    expect(stats.dailyResults['2026-03-10']).toMatchObject({
+      status: 'won',
+      rounds: 4,
+    });
   });
 
   it('caps completedDailyKeys at 365 entries', () => {

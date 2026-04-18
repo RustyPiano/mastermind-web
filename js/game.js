@@ -1,8 +1,33 @@
 import { DEFAULT_MODE_ID, getAvailableColors } from './constants.js';
+import {
+  getDeviceType,
+  trackChallengeCreate,
+  trackChallengeOpen,
+  trackChallengeStart,
+  trackDailyClick,
+  trackGameFinish,
+  trackGameStart,
+  trackGuessSubmit,
+  trackHomeView,
+  trackModeClick,
+  trackShareClick,
+  trackShareSuccess,
+  trackStatsOpen,
+} from './analytics.js';
+import {
+  buildGuessStatusMessage,
+  buildRoundSummaryMessage,
+} from './guidance.js';
 import { GameState } from './state.js';
 import { calcFeedback, FEEDBACK, isWinningFeedback } from './engine.js';
-import { dateToChallengeKey, generateDailySecret, isDailySessionForKey } from './daily.js';
-import { hasCompletedDaily, recordGameResult } from './stats.js';
+import {
+  buildDailyModeEntryState,
+  dateToChallengeKey,
+  generateDailySecret,
+  getDailySessionType,
+  getTimeUntilNextChallenge,
+} from './daily.js';
+import { getDailyChallengeResult, hasCompletedDaily, recordGameResult } from './stats.js';
 import { SINGLE_PRESET_IDS, getModeConfig, isSinglePresetVariant } from './mode-config.js';
 import {
   clearSession,
@@ -15,6 +40,7 @@ import {
   saveStats,
 } from './storage.js';
 import {
+  buildChallengeIntroContent,
   buildChallengeNativeSharePayload,
   shareResult,
   buildChallengeShareText,
@@ -51,7 +77,7 @@ import {
 } from './ui.js';
 
 let saveScheduled = false;
-const challengeTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+let dailyCountdownIntervalId = null;
 let latestResult = null;
 const presetButtonIds = Object.freeze({
   starter: 'btnPresetStarter',
@@ -81,38 +107,60 @@ function scheduleSave() {
 }
 
 function getGuessStatusMessage() {
-  const { codeLength } = GameState.activeConfig;
-  const prefix = GameState.variant === 'daily'
-    ? `每日挑战 ${GameState.challengeKey} · `
-    : '';
-
-  if (GameState.isGuessComplete()) {
-    return `${prefix}已选满 ${codeLength} 色，点击提交`;
-  }
-
-  return `${prefix}选满 ${codeLength} 色后提交`;
+  return buildGuessStatusMessage({
+    codeLength: GameState.activeConfig.codeLength,
+    isDaily: GameState.variant === 'daily',
+    isDailyPractice: GameState.isDailyPractice,
+    challengeKey: GameState.challengeKey,
+    isGuessComplete: GameState.isGuessComplete(),
+    isFirstGuidedGame: loadStats().totals.gamesPlayed === 0 && !GameState.isChallenge,
+  });
 }
 
 function getRoundSummaryMessage(roundNumber, exactCount, misplacedCount) {
-  const remaining = GameState.activeConfig.maxGuesses - roundNumber;
-  return `第 ${roundNumber} 轮 · 🟢 ${exactCount} · 🟠 ${misplacedCount} · 剩余 ${remaining} 次`;
+  return buildRoundSummaryMessage({
+    roundNumber,
+    exactCount,
+    misplacedCount,
+    maxGuesses: GameState.activeConfig.maxGuesses,
+    isFirstGuidedGame: loadStats().totals.gamesPlayed === 0 && !GameState.isChallenge,
+  });
 }
 
 function getTodayChallengeKey() {
-  return dateToChallengeKey(new Date(), challengeTimeZone);
+  return dateToChallengeKey(new Date());
 }
 
-function refreshModeSelectionMeta() {
+function refreshModeSelectionMeta({ renderStats = true } = {}) {
   const challengeKey = getTodayChallengeKey();
   const stats = loadStats();
   const savedSession = loadSession();
+  const hasCompleted = hasCompletedDaily(stats, challengeKey);
+  const activeSessionType = getDailySessionType(savedSession, challengeKey);
 
-  updateDailyModeEntry({
+  updateDailyModeEntry(buildDailyModeEntryState({
     challengeKey,
-    isCompleted: hasCompletedDaily(stats, challengeKey),
-    hasActiveSession: isDailySessionForKey(savedSession, challengeKey),
-  });
-  renderStatsPanel(stats);
+    hasCompleted,
+    activeSessionType,
+    dailyResult: getDailyChallengeResult(stats, challengeKey),
+    msUntilNextChallenge: getTimeUntilNextChallenge(),
+  }));
+
+  if (renderStats) {
+    renderStatsPanel(stats);
+  }
+}
+
+function ensureDailyCountdownTicker() {
+  if (dailyCountdownIntervalId) {
+    clearInterval(dailyCountdownIntervalId);
+  }
+
+  dailyCountdownIntervalId = window.setInterval(() => {
+    if (GameState.screenId === 'screenMode') {
+      refreshModeSelectionMeta({ renderStats: false });
+    }
+  }, 1000);
 }
 
 function dismissOnboarding() {
@@ -129,18 +177,26 @@ function toggleLegend() {
 
 function toggleStatsPanel() {
   const panel = document.getElementById('statsPanel');
+  if (panel?.hidden) {
+    trackStatsOpen();
+  }
   setStatsPanelExpanded(Boolean(panel?.hidden));
 }
 
 function recordFinishedGame({ win, rounds }) {
   const finishedResult = buildFinishedResult(GameState, { win, rounds });
+  latestResult = finishedResult;
+
+  if (GameState.isDailyPractice) {
+    return;
+  }
+
   const nextStats = recordGameResult(loadStats(), {
     ...finishedResult,
     finishedAt: new Date().toISOString(),
   });
 
   saveStats(nextStats);
-  latestResult = finishedResult;
 }
 
 async function handleShareResult() {
@@ -149,8 +205,17 @@ async function handleShareResult() {
     return;
   }
 
+  trackShareClick({
+    kind: 'result',
+    variant: latestResult.variant,
+  });
+
   try {
     const result = await shareResult(latestResult);
+    trackShareSuccess({
+      kind: 'result',
+      variant: latestResult.variant,
+    });
     updateStatus(result.method === 'share' ? '分享成功' : '已复制结果，可直接粘贴分享');
   } catch {
     updateStatus('当前浏览器不支持直接分享，请手动复制结果');
@@ -158,7 +223,9 @@ async function handleShareResult() {
 }
 
 function hydrateRecoveredSession() {
-  applyModeLabels(GameState.mode, GameState.variant, GameState.challengeKey);
+  applyModeLabels(GameState.mode, GameState.variant, GameState.challengeKey, {
+    isDailyPractice: GameState.isDailyPractice,
+  });
   buildBoard();
   restoreBoardHistory(handleGuessSlotClick);
 
@@ -171,6 +238,12 @@ function hydrateRecoveredSession() {
   if (GameState.screenId === 'screenTransition') {
     refreshSetupUI();
     setCurrentScreen('screenTransition');
+    return;
+  }
+
+  if (GameState.screenId === 'screenChallengeIntro') {
+    refreshChallengeIntro();
+    setCurrentScreen('screenChallengeIntro');
     return;
   }
 
@@ -222,14 +295,35 @@ async function generateChallenge() {
 
   const url = buildChallengeUrl(GameState.secretCode, undefined, {
     variant: GameState.variant,
+    source: 'dual_setup',
   });
   const copyText = buildChallengeShareText(url, GameState.variant);
+  trackShareClick({
+    kind: 'challenge',
+    variant: GameState.variant,
+  });
   try {
     if (navigator?.share) {
       await navigator.share(buildChallengeNativeSharePayload(url, GameState.variant));
+      trackShareSuccess({
+        kind: 'challenge',
+        variant: GameState.variant,
+      });
+      trackChallengeCreate({
+        variant: GameState.variant,
+        source: 'dual_setup',
+      });
       updateStatus('挑战链接分享成功');
     } else if (navigator?.clipboard?.writeText) {
       await copyShareText(copyText);
+      trackShareSuccess({
+        kind: 'challenge',
+        variant: GameState.variant,
+      });
+      trackChallengeCreate({
+        variant: GameState.variant,
+        source: 'dual_setup',
+      });
       updateStatus('挑战链接已复制到剪贴板，快发给朋友吧！');
     } else {
       updateStatus('无法分享，请截图或手动告诉朋友');
@@ -248,6 +342,22 @@ function startGuessing() {
   scheduleSave();
 }
 
+function refreshChallengeIntro() {
+  const titleEl = document.getElementById('challengeIntroTitle');
+  const bodyEl = document.getElementById('challengeIntroBody');
+  const actionButton = document.getElementById('btnStartChallenge');
+  if (!titleEl || !bodyEl || !actionButton) return;
+
+  const content = buildChallengeIntroContent({
+    variant: GameState.variant,
+    challengeTargetRounds: GameState.challengeTargetRounds,
+  });
+
+  titleEl.textContent = content.title;
+  bodyEl.textContent = content.body;
+  actionButton.textContent = content.actionLabel;
+}
+
 function openSingleModes() {
   setCurrentScreen('screenSingleModes');
 }
@@ -262,13 +372,17 @@ function startSingleMode(variant = 'classic') {
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
   GameState.generateRandomSecret(getColorIdsForConfig(config));
+  trackGameStart({
+    variant,
+    isChallenge: false,
+  });
   applyModeLabels('single', variant);
   buildBoard();
   scheduleSave();
   startGuessing();
 }
 
-function startDailyMode() {
+function startDailyMode({ practice = false } = {}) {
   const challengeKey = getTodayChallengeKey();
   const config = getModeConfig('daily');
 
@@ -279,13 +393,21 @@ function startDailyMode() {
   GameState.setStartedAt();
   GameState.setChallengeKey(challengeKey);
   GameState.setStatus('in_progress');
+  GameState.isDailyPractice = practice;
   GameState.secretCode = generateDailySecret({
     dateKey: challengeKey,
     colors: getColorIdsForConfig(config),
     codeLength: config.codeLength,
     allowDuplicates: config.allowDuplicates,
   });
-  applyModeLabels('single', 'daily', challengeKey);
+  trackGameStart({
+    variant: 'daily',
+    isChallenge: false,
+    isPractice: practice,
+  });
+  applyModeLabels('single', 'daily', challengeKey, {
+    isDailyPractice: practice,
+  });
   buildBoard();
   scheduleSave();
   startGuessing();
@@ -301,6 +423,10 @@ function startDuplicatesMode() {
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
   GameState.generateRandomSecret(getColorIdsForConfig(config));
+  trackGameStart({
+    variant: 'duplicates',
+    isChallenge: false,
+  });
   applyModeLabels('single', 'duplicates');
   buildBoard();
   scheduleSave();
@@ -314,6 +440,10 @@ function startDualMode() {
   GameState.setActiveConfig(getModeConfig(DEFAULT_MODE_ID));
   GameState.setStartedAt();
   GameState.setStatus('in_progress');
+  trackGameStart({
+    variant: DEFAULT_MODE_ID,
+    isChallenge: false,
+  });
   applyModeLabels('dual', 'classic');
   buildBoard();
   setCurrentScreen('screenSetup');
@@ -321,7 +451,13 @@ function startDualMode() {
   refreshSetupUI();
 }
 
-function startChallengeMode({ secretCode, variant, challengeUrl }) {
+function openChallengeIntro({
+  secretCode,
+  variant,
+  challengeUrl,
+  challengeSource = null,
+  challengeTargetRounds = null,
+}) {
   const config = getModeConfig(variant);
 
   GameState.reset();
@@ -334,10 +470,27 @@ function startChallengeMode({ secretCode, variant, challengeUrl }) {
   GameState.secretCode = [...secretCode];
   GameState.isChallenge = true;
   GameState.challengeUrl = challengeUrl;
+  GameState.challengeSource = challengeSource;
+  GameState.challengeTargetRounds = challengeTargetRounds;
+  GameState.isDailyPractice = false;
 
   applyModeLabels('dual', variant);
   buildBoard();
+  refreshChallengeIntro();
+  setCurrentScreen('screenChallengeIntro');
   scheduleSave();
+}
+
+function startChallengeGuessing() {
+  trackGameStart({
+    variant: GameState.variant,
+    isChallenge: true,
+    isPractice: false,
+  });
+  trackChallengeStart({
+    variant: GameState.variant,
+    source: GameState.challengeSource ?? 'url',
+  });
   startGuessing();
 }
 
@@ -382,6 +535,11 @@ function submitGuess() {
   if (!GameState.isGuessComplete()) return;
 
   const r = GameState.currentRound();
+  trackGuessSubmit({
+    variant: GameState.variant,
+    round: r + 1,
+    isPractice: GameState.isDailyPractice,
+  });
   const feedback = calcFeedback(GameState.currentGuess, GameState.secretCode);
 
   freezeRow(r); // Lock current row
@@ -396,6 +554,12 @@ function submitGuess() {
   if (isWinningFeedback(feedback, GameState.activeConfig.codeLength)) {
     GameState.setStatus('won');
     recordFinishedGame({ win: true, rounds: r + 1 });
+    trackGameFinish({
+      variant: GameState.variant,
+      win: true,
+      roundsUsed: r + 1,
+      isPractice: GameState.isDailyPractice,
+    });
     clearSession();
     refreshModeSelectionMeta();
 
@@ -415,6 +579,12 @@ function submitGuess() {
   if (r + 1 >= GameState.activeConfig.maxGuesses) {
     GameState.setStatus('lost');
     recordFinishedGame({ win: false, rounds: r + 1 });
+    trackGameFinish({
+      variant: GameState.variant,
+      win: false,
+      roundsUsed: r + 1,
+      isPractice: GameState.isDailyPractice,
+    });
     clearSession();
     refreshModeSelectionMeta();
     setTimeout(() => {
@@ -457,8 +627,11 @@ function replayGame() {
   hideOverlay();
   setShareButtonEnabled(false);
   if (mode === 'single' && variant === 'daily') {
-    // Daily is once-per-day; redirect to classic mode so user can keep playing
-    startSingleMode();
+    if (GameState.isDailyPractice || GameState.status === 'lost') {
+      startDailyMode({ practice: true });
+    } else {
+      startSingleMode();
+    }
   } else if (mode === 'single' && variant === 'duplicates') {
     startDuplicatesMode();
   } else if (mode === 'single' && isSinglePresetVariant(variant)) {
@@ -476,20 +649,47 @@ function replayGame() {
 
 function bindEvents() {
   document.getElementById('btnModeSingle')
-    .addEventListener('click', openSingleModes);
+    .addEventListener('click', () => {
+      trackModeClick({ mode: 'single', variant: 'presets' });
+      openSingleModes();
+    });
 
   document.getElementById('btnModeDaily')
-    .addEventListener('click', startDailyMode);
+    .addEventListener('click', () => {
+      const challengeKey = getTodayChallengeKey();
+      const savedSession = loadSession();
+      const activeSessionType = getDailySessionType(savedSession, challengeKey);
+      const dailyResult = getDailyChallengeResult(loadStats(), challengeKey);
+      trackModeClick({ mode: 'single', variant: 'daily' });
+      trackDailyClick({ hasActiveSession: activeSessionType === 'official' });
+      if (activeSessionType && savedSession) {
+        latestResult = null;
+        GameState.restore(savedSession);
+        hydrateRecoveredSession();
+        setShareButtonEnabled(false);
+        return;
+      }
+      startDailyMode({ practice: dailyResult?.status === 'lost' });
+    });
 
   document.getElementById('btnModeDuplicates')
-    .addEventListener('click', startDuplicatesMode);
+    .addEventListener('click', () => {
+      trackModeClick({ mode: 'single', variant: 'duplicates' });
+      startDuplicatesMode();
+    });
 
   document.getElementById('btnModeDual')
-    .addEventListener('click', startDualMode);
+    .addEventListener('click', () => {
+      trackModeClick({ mode: 'dual', variant: DEFAULT_MODE_ID });
+      startDualMode();
+    });
 
   SINGLE_PRESET_IDS.forEach((variant) => {
     document.getElementById(presetButtonIds[variant])
-      .addEventListener('click', () => startSingleMode(variant));
+      .addEventListener('click', () => {
+        trackModeClick({ mode: 'single', variant });
+        startSingleMode(variant);
+      });
   });
 
   document.getElementById('btnBackToMode')
@@ -507,6 +707,9 @@ function bindEvents() {
 
   document.getElementById('btnStartGuessing')
     .addEventListener('click', startGuessing);
+
+  document.getElementById('btnStartChallenge')
+    .addEventListener('click', startChallengeGuessing);
 
   document.getElementById('btnClear')
     .addEventListener('click', clearCurrentGuess);
@@ -529,6 +732,16 @@ function bindEvents() {
 
   document.getElementById('btnDismissOnboarding')
     .addEventListener('click', dismissOnboarding);
+
+  document.getElementById('btnBrowseModes')
+    .addEventListener('click', dismissOnboarding);
+
+  document.getElementById('btnStartStarter')
+    .addEventListener('click', () => {
+      trackModeClick({ mode: 'single', variant: 'starter' });
+      dismissOnboarding();
+      startSingleMode('starter');
+    });
 
   document.getElementById('btnToggleStats')
     .addEventListener('click', toggleStatsPanel);
@@ -560,6 +773,7 @@ function init() {
   setOnboardingVisibility(!loadPreferences().firstRunDismissed);
   setLegendVisibility(false);
   setStatsPanelExpanded(false);
+  ensureDailyCountdownTicker();
 
   // Check URL for challenge parameter first
   const params = new URLSearchParams(window.location.search);
@@ -572,7 +786,11 @@ function init() {
     if (payload) {
       // Clear the param from URL without refreshing so it doesn't stay there if they replay
       window.history.replaceState({}, document.title, window.location.pathname);
-      startChallengeMode({
+      trackChallengeOpen({
+        variant: payload.variant,
+        source: payload.challengeSource ?? 'url',
+      });
+      openChallengeIntro({
         ...payload,
         challengeUrl,
       });
@@ -597,6 +815,10 @@ function init() {
   refreshSetupUI();
   setCurrentScreen('screenMode');
   refreshModeSelectionMeta();
+  trackHomeView({
+    isFirstSession: loadStats().totals.gamesPlayed === 0,
+    deviceType: getDeviceType(),
+  });
   setShareButtonEnabled(false);
 }
 
