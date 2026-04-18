@@ -159,3 +159,14 @@ export function generateDailySecret({ dateKey, colors, codeLength, allowDuplicat
 export function isDailySessionForKey(session, challengeKey) {
   return getDailySessionType(session, challengeKey) !== null;
 }
+
+export function getPreviousDayKey(challengeKey) {
+  if (!challengeKey) return null;
+  const [y, m, d] = challengeKey.split('-').map(Number);
+  const prev = new Date(y, m - 1, d - 1);
+  return [
+    prev.getFullYear(),
+    String(prev.getMonth() + 1).padStart(2, '0'),
+    String(prev.getDate()).padStart(2, '0'),
+  ].join('-');
+}

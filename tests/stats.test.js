@@ -6,6 +6,11 @@ import {
   getModeWinRate,
   hasCompletedDaily,
   recordGameResult,
+  refreshMakeupCardsIfNeeded,
+  canUseMakeupCard,
+  applyMakeupCard,
+  getMissedDayKey,
+  createDefaultStats,
 } from '../js/stats.js';
 
 describe('recordGameResult', () => {
@@ -293,5 +298,120 @@ describe('stats helpers', () => {
     expect(sections[0].cards).toHaveLength(4);
     expect(sections[1].cards[0].metrics.some((metric) => metric.label === '当前连胜')).toBe(true);
     expect(sections[2].cards.map((card) => card.title)).toEqual(['重复色模式', '双人对战']);
+  });
+});
+
+describe('makeup card system', () => {
+  it('defaults to 2 available cards with no refresh month', () => {
+    const stats = createDefaultStats();
+    expect(stats.makeupCards.available).toBe(2);
+    expect(stats.makeupCards.refreshMonth).toBeNull();
+    expect(stats.makeupDays).toEqual([]);
+  });
+
+  it('refreshMakeupCardsIfNeeded resets available to 2 on new month', () => {
+    const stats = { ...createDefaultStats(), makeupCards: { available: 0, refreshMonth: '2026-03' } };
+    const refreshed = refreshMakeupCardsIfNeeded(stats, '2026-04');
+    expect(refreshed.makeupCards.available).toBe(2);
+    expect(refreshed.makeupCards.refreshMonth).toBe('2026-04');
+  });
+
+  it('refreshMakeupCardsIfNeeded is a no-op within the same month', () => {
+    const stats = { ...createDefaultStats(), makeupCards: { available: 1, refreshMonth: '2026-04' } };
+    const refreshed = refreshMakeupCardsIfNeeded(stats, '2026-04');
+    expect(refreshed.makeupCards.available).toBe(1);
+  });
+
+  it('canUseMakeupCard returns true when cards available', () => {
+    expect(canUseMakeupCard({ makeupCards: { available: 2, refreshMonth: null } })).toBe(true);
+    expect(canUseMakeupCard({ makeupCards: { available: 0, refreshMonth: null } })).toBe(false);
+  });
+
+  it('applyMakeupCard consumes one card and records the missed day', () => {
+    const stats = createDefaultStats();
+    const next = applyMakeupCard(stats, '2026-04-10');
+    expect(next.makeupCards.available).toBe(1);
+    expect(next.makeupDays).toContain('2026-04-10');
+  });
+
+  it('applyMakeupCard is idempotent for the same day', () => {
+    const stats = createDefaultStats();
+    const once = applyMakeupCard(stats, '2026-04-10');
+    const twice = applyMakeupCard(once, '2026-04-10');
+    expect(twice.makeupCards.available).toBe(1);
+    expect(twice.makeupDays.filter((d) => d === '2026-04-10')).toHaveLength(1);
+  });
+
+  it('applyMakeupCard is a no-op when no cards remain', () => {
+    const stats = { ...createDefaultStats(), makeupCards: { available: 0, refreshMonth: null } };
+    const next = applyMakeupCard(stats, '2026-04-10');
+    expect(next.makeupDays).not.toContain('2026-04-10');
+  });
+
+  it('getMissedDayKey returns the skipped day when there is exactly a 1-day gap', () => {
+    const stats = { ...createDefaultStats(), lastDailyPlayedKey: '2026-04-17' };
+    expect(getMissedDayKey(stats, '2026-04-19')).toBe('2026-04-18');
+  });
+
+  it('getMissedDayKey returns null when gap is 0 (consecutive)', () => {
+    const stats = { ...createDefaultStats(), lastDailyPlayedKey: '2026-04-17' };
+    expect(getMissedDayKey(stats, '2026-04-18')).toBeNull();
+  });
+
+  it('getMissedDayKey returns null when gap is >1 day', () => {
+    const stats = { ...createDefaultStats(), lastDailyPlayedKey: '2026-04-15' };
+    expect(getMissedDayKey(stats, '2026-04-19')).toBeNull();
+  });
+
+  it('streak is maintained when made-up day bridges the gap on next daily win', () => {
+    let stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-04-17',
+      rounds: 4,
+      win: true,
+      finishedAt: '2026-04-17T08:00:00.000Z',
+    });
+
+    expect(stats.streaks.currentDailyWin).toBe(1);
+
+    // Player uses a makeup card for the missed day (2026-04-18)
+    stats = applyMakeupCard(stats, '2026-04-18');
+
+    // Player wins on 2026-04-19 (2 days after last played, but gap bridged by makeup)
+    stats = recordGameResult(stats, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-04-19',
+      rounds: 5,
+      win: true,
+      finishedAt: '2026-04-19T08:00:00.000Z',
+    });
+
+    expect(stats.streaks.currentDailyWin).toBe(2);
+    expect(stats.streaks.bestDailyWin).toBe(2);
+  });
+
+  it('streak resets without makeup card when days are skipped', () => {
+    let stats = recordGameResult(null, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-04-17',
+      rounds: 4,
+      win: true,
+      finishedAt: '2026-04-17T08:00:00.000Z',
+    });
+
+    // No makeup card used — direct jump to 2026-04-19
+    stats = recordGameResult(stats, {
+      mode: 'single',
+      variant: 'daily',
+      challengeKey: '2026-04-19',
+      rounds: 3,
+      win: true,
+      finishedAt: '2026-04-19T08:00:00.000Z',
+    });
+
+    expect(stats.streaks.currentDailyWin).toBe(1);
   });
 });

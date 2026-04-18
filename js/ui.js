@@ -360,6 +360,31 @@ export function setOnboardingVisibility(visible) {
   card.hidden = !visible;
 }
 
+export function updateMakeupCardBanner({ show, missedKey, available, alreadyUsed }) {
+  const banner = document.getElementById('makeupCardBanner');
+  if (!banner) return;
+
+  banner.hidden = !show;
+  if (!show) return;
+
+  const textEl = document.getElementById('makeupCardText');
+  const subEl = document.getElementById('makeupCardSub');
+  const btn = document.getElementById('btnUseMakeupCard');
+
+  if (alreadyUsed) {
+    if (textEl) textEl.textContent = `已补签 ${missedKey} ✓  今天通关即可延续连击`;
+    if (btn) btn.hidden = true;
+  } else {
+    if (textEl) textEl.textContent = `${missedKey} 未参与每日挑战，可补签维持连击`;
+    if (btn) {
+      btn.hidden = false;
+      btn.disabled = available === 0;
+    }
+  }
+
+  if (subEl) subEl.textContent = `剩余 ${available} 张 · 每月补充 ${available === 0 && !alreadyUsed ? '（已用完）' : ''}`.trim().replace(' （已用完）', '（已用完）');
+}
+
 export function setLegendVisibility(visible) {
   const sheet = document.getElementById('legendSheet');
   const button = document.getElementById('btnOpenLegend');

@@ -220,6 +220,56 @@
   margin-top: 12px;
 }
 
+.makeup-card-banner {
+  margin-top: var(--space-sm);
+  padding: 10px 12px;
+  background: rgba(50, 215, 75, 0.08);
+  border: 1px solid rgba(50, 215, 75, 0.25);
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+
+.makeup-card-banner__text {
+  margin: 0 0 8px;
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.makeup-card-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.makeup-card-banner__sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.btn-small {
+  width: auto;
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: var(--text-xs);
+}
+
+.btn-accent {
+  background: var(--color-correct);
+  color: #000;
+}
+
+.btn-accent:hover {
+  opacity: 0.85;
+}
+
+.btn-accent:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 1;
+}
+
 .status-tip {
   display: inline-block;
   margin-top: 2px;

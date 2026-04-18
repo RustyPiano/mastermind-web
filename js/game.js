@@ -27,7 +27,7 @@ import {
   getDailySessionType,
   getTimeUntilNextChallenge,
 } from './daily.js';
-import { getDailyChallengeResult, hasCompletedDaily, recordGameResult } from './stats.js';
+import { getDailyChallengeResult, hasCompletedDaily, recordGameResult, getMissedDayKey, canUseMakeupCard, applyMakeupCard, refreshMakeupCardsIfNeeded } from './stats.js';
 import { SINGLE_PRESET_IDS, getModeConfig, isSinglePresetVariant } from './mode-config.js';
 import {
   clearSession,
@@ -74,6 +74,7 @@ import {
   setLegendVisibility,
   isLegendVisible,
   setOnboardingVisibility,
+  updateMakeupCardBanner,
 } from './ui.js';
 
 let saveScheduled = false;
@@ -131,12 +132,23 @@ function getTodayChallengeKey() {
   return dateToChallengeKey(new Date());
 }
 
+function getMonthKey(challengeKey) {
+  return challengeKey ? challengeKey.slice(0, 7) : null;
+}
+
 function refreshModeSelectionMeta({ renderStats = true } = {}) {
   const challengeKey = getTodayChallengeKey();
-  const stats = loadStats();
+  let stats = loadStats();
   const savedSession = loadSession();
   const hasCompleted = hasCompletedDaily(stats, challengeKey);
   const activeSessionType = getDailySessionType(savedSession, challengeKey);
+
+  // Refresh makeup cards at start of new month
+  const monthKey = getMonthKey(challengeKey);
+  if (stats.makeupCards?.refreshMonth !== monthKey) {
+    stats = refreshMakeupCardsIfNeeded(stats, monthKey);
+    saveStats(stats);
+  }
 
   updateDailyModeEntry(buildDailyModeEntryState({
     challengeKey,
@@ -145,6 +157,24 @@ function refreshModeSelectionMeta({ renderStats = true } = {}) {
     dailyResult: getDailyChallengeResult(stats, challengeKey),
     msUntilNextChallenge: getTimeUntilNextChallenge(),
   }));
+
+  // Show makeup card banner if there's exactly a 1-day gap and today not yet completed
+  if (!hasCompleted && activeSessionType !== 'official') {
+    const missedKey = getMissedDayKey(stats, challengeKey);
+    if (missedKey) {
+      const alreadyUsed = stats.makeupDays?.includes(missedKey) ?? false;
+      const available = stats.makeupCards?.available ?? 0;
+      if (alreadyUsed || available > 0) {
+        updateMakeupCardBanner({ show: true, missedKey, available, alreadyUsed });
+      } else {
+        updateMakeupCardBanner({ show: false });
+      }
+    } else {
+      updateMakeupCardBanner({ show: false });
+    }
+  } else {
+    updateMakeupCardBanner({ show: false });
+  }
 
   if (renderStats) {
     renderStatsPanel(stats);
@@ -745,6 +775,19 @@ function bindEvents() {
 
   document.getElementById('btnToggleStats')
     .addEventListener('click', toggleStatsPanel);
+
+  const makeupBtn = document.getElementById('btnUseMakeupCard');
+  if (makeupBtn) {
+    makeupBtn.addEventListener('click', () => {
+      const challengeKey = getTodayChallengeKey();
+      const stats = loadStats();
+      const missedKey = getMissedDayKey(stats, challengeKey);
+      if (!missedKey || !canUseMakeupCard(stats)) return;
+      const nextStats = applyMakeupCard(stats, missedKey);
+      saveStats(nextStats);
+      refreshModeSelectionMeta();
+    });
+  }
 
   document.getElementById('btnOpenLegend')
     .addEventListener('click', toggleLegend);

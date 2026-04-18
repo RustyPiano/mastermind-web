@@ -2,6 +2,18 @@ import { SINGLE_PRESET_IDS, getModeConfig } from './mode-config.js';
 import { FEEDBACK } from './engine.js';
 
 const MAX_COMPLETED_DAILIES = 365;
+const MAKEUP_CARDS_PER_MONTH = 2;
+
+function getPreviousDayKey(challengeKey) {
+  if (!challengeKey) return null;
+  const [y, m, d] = challengeKey.split('-').map(Number);
+  const prev = new Date(y, m - 1, d - 1);
+  return [
+    prev.getFullYear(),
+    String(prev.getMonth() + 1).padStart(2, '0'),
+    String(prev.getDate()).padStart(2, '0'),
+  ].join('-');
+}
 const TRACKED_VARIANTS = Object.freeze([
   ...SINGLE_PRESET_IDS,
   'daily',
@@ -66,6 +78,11 @@ export function createDefaultStats() {
     lastDailyPlayedKey: null,
     dailyResults: {},
     achievements: [],
+    makeupCards: {
+      available: MAKEUP_CARDS_PER_MONTH,
+      refreshMonth: null,
+    },
+    makeupDays: [],
   };
 }
 
@@ -128,6 +145,13 @@ export function normalizeStats(stats) {
     achievements: Array.isArray(stats.achievements)
       ? [...stats.achievements]
       : [],
+    makeupCards: {
+      refreshMonth: stats.makeupCards?.refreshMonth ?? null,
+      available: typeof stats.makeupCards?.available === 'number'
+        ? Math.min(MAKEUP_CARDS_PER_MONTH, Math.max(0, stats.makeupCards.available))
+        : MAKEUP_CARDS_PER_MONTH,
+    },
+    makeupDays: Array.isArray(stats.makeupDays) ? [...stats.makeupDays] : [],
   };
 }
 
@@ -164,6 +188,47 @@ export function getDailyChallengeResult(stats, challengeKey) {
 
   const safeStats = normalizeStats(stats);
   return safeStats.dailyResults[challengeKey] ?? null;
+}
+
+export function refreshMakeupCardsIfNeeded(stats, monthKey) {
+  const normalized = normalizeStats(stats);
+  if (normalized.makeupCards.refreshMonth === monthKey) {
+    return normalized;
+  }
+  return {
+    ...normalized,
+    makeupCards: {
+      available: MAKEUP_CARDS_PER_MONTH,
+      refreshMonth: monthKey,
+    },
+  };
+}
+
+export function canUseMakeupCard(stats) {
+  return (stats?.makeupCards?.available ?? 0) > 0;
+}
+
+export function applyMakeupCard(stats, missedKey) {
+  const normalized = normalizeStats(stats);
+  if (!canUseMakeupCard(normalized)) return normalized;
+  if (normalized.makeupDays.includes(missedKey)) return normalized;
+  return {
+    ...normalized,
+    makeupCards: {
+      ...normalized.makeupCards,
+      available: normalized.makeupCards.available - 1,
+    },
+    makeupDays: [...normalized.makeupDays, missedKey],
+  };
+}
+
+export function getMissedDayKey(stats, challengeKey) {
+  const lastPlayed = stats?.lastDailyPlayedKey;
+  if (!lastPlayed || !challengeKey) return null;
+  const yesterdayKey = getPreviousDayKey(challengeKey);
+  if (!yesterdayKey) return null;
+  if (isConsecutiveDay(lastPlayed, yesterdayKey)) return yesterdayKey;
+  return null;
 }
 
 export function getAverageRounds(modeStats) {
@@ -338,7 +403,15 @@ export function recordGameResult(stats, result) {
 
     if (result.win) {
       const isConsecutive = isConsecutiveDay(nextStats.lastDailyPlayedKey, result.challengeKey);
-      nextStats.streaks.currentDailyWin = isConsecutive ? nextStats.streaks.currentDailyWin + 1 : 1;
+      const missedKey = getPreviousDayKey(result.challengeKey);
+      const isBridgedByMakeup = !isConsecutive
+        && missedKey !== null
+        && isConsecutiveDay(nextStats.lastDailyPlayedKey, missedKey)
+        && nextStats.makeupDays.includes(missedKey);
+      const effectivelyConsecutive = isConsecutive || isBridgedByMakeup;
+      nextStats.streaks.currentDailyWin = effectivelyConsecutive
+        ? nextStats.streaks.currentDailyWin + 1
+        : 1;
       nextStats.streaks.bestDailyWin = Math.max(
         nextStats.streaks.bestDailyWin,
         nextStats.streaks.currentDailyWin,

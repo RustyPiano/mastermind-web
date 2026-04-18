@@ -227,6 +227,8 @@ describe('storage helpers', () => {
       lastDailyPlayedKey: null,
       dailyResults: {},
       achievements: [],
+      makeupCards: { available: 2, refreshMonth: null },
+      makeupDays: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: false });
 
@@ -250,6 +252,8 @@ describe('storage helpers', () => {
       lastDailyPlayedKey: null,
       dailyResults: {},
       achievements: [],
+      makeupCards: { available: 2, refreshMonth: null },
+      makeupDays: [],
     });
     expect(loadPreferences()).toEqual({ version: 1, firstRunDismissed: true });
   });
@@ -277,6 +281,8 @@ describe('storage helpers', () => {
       lastDailyPlayedKey: null,
       dailyResults: {},
       achievements: [],
+      makeupCards: { available: 2, refreshMonth: null },
+      makeupDays: [],
     });
   });
 });
