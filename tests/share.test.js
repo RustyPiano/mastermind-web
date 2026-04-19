@@ -121,7 +121,7 @@ describe('buildChallengeShareText', () => {
   it('includes the challenge url in copied challenge text', () => {
     expect(buildChallengeShareText('https://mastermind.rustypiano.com/?challenge=abc', 'hard')).toBe([
       '密码机 困难模式 好友挑战',
-      '我设置了一个密码，来破解吧！',
+      '我设了一个密码，你能破解吗？',
       'https://mastermind.rustypiano.com/?challenge=abc',
     ].join('\n'));
   });
@@ -131,7 +131,7 @@ describe('buildChallengeInviteText', () => {
   it('omits the url for system share payloads', () => {
     expect(buildChallengeInviteText('hard')).toBe([
       '密码机 困难模式 好友挑战',
-      '我设置了一个密码，来破解吧！',
+      '我设了一个密码，你能破解吗？',
     ].join('\n'));
   });
 });
@@ -157,7 +157,7 @@ describe('buildChallengeNativeSharePayload', () => {
       title: '密码机 朋友挑战',
       text: [
         '密码机 困难模式 好友挑战',
-        '我设置了一个密码，来破解吧！',
+        '我设了一个密码，你能破解吗？',
       ].join('\n'),
       url: 'https://mastermind.rustypiano.com/?challenge=abc',
     });
@@ -172,7 +172,7 @@ describe('buildChallengeNativeSharePayload', () => {
       title: '密码机 朋友挑战',
       text: [
         '密码机 困难模式 好友挑战',
-        '我设置了一个密码，来破解吧！',
+        '我设了一个密码，你能破解吗？',
         'https://mastermind.rustypiano.com/?challenge=abc',
       ].join('\n'),
     });

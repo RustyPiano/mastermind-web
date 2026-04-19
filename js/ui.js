@@ -280,42 +280,42 @@ export function showResult(win, rounds) {
     if (GameState.variant === 'daily' && GameState.isDailyPractice) {
       summaryText = `${winnerText}用了 ${roundText} 复盘了今天这题。`;
     } else if (GameState.variant === 'daily') {
-      summaryText = `${winnerText}用了 ${roundText} 完成今天这题。`;
+      summaryText = `${winnerText}用了 ${roundText} 拿下今天这题。`;
     } else if (GameState.variant === 'duplicates') {
-      summaryText = `${winnerText}用了 ${roundText} 破解重复色规则。`;
+      summaryText = `${winnerText}用了 ${roundText} 搞定了重复色。`;
     } else {
       summaryText = `${winnerText}用了 ${roundText} 破解了密码。`;
     }
   } else if (GameState.variant === 'daily' && GameState.isDailyPractice) {
     summaryText = `${winnerText}这次还没复盘成功，再试一次。`;
   } else if (GameState.variant === 'daily') {
-    summaryText = `${winnerText}没能在 ${roundText} 内完成今天这题。`;
+    summaryText = `今天这题没能在 ${roundText} 内拿下。`;
   } else if (GameState.variant === 'duplicates') {
-    summaryText = `${winnerText}没能在 ${roundText} 内破解重复色规则。`;
+    summaryText = `重复色这次没能在 ${roundText} 内破解。`;
   } else {
-    summaryText = `${winnerText}没能在 ${roundText} 内破解密码。`;
+    summaryText = `这次没能在 ${roundText} 内破解密码。`;
   }
 
   let coachText = '';
   if (GameState.variant === 'daily' && GameState.isDailyPractice) {
-    coachText = `\n\n<span style="color:var(--text-muted);">今日练习不会覆盖今天的正式成绩。</span>`;
+    coachText = `\n\n<span style="color:var(--text-muted);">今日练习不计入正式成绩。</span>`;
   } else if (win && GameState.mode !== 'dual') {
     // Generate coach evaluation for single player modes based on attempts
     if (rounds <= 3) {
-      coachText = `\n\n<span style="color:var(--accent-primary);">S级评价：神机妙算！你简直是福尔摩斯！</span>`;
+      coachText = `\n\n<span style="color:var(--accent-primary);">S 级：这手法，福尔摩斯来了也得服气。</span>`;
     } else if (rounds <= 5) {
-      coachText = `\n\n<span style="color:var(--color-correct);">A级评价：思路清晰，逻辑缜密。</span>`;
+      coachText = `\n\n<span style="color:var(--color-correct);">A 级：思路很清晰，推理走得挺稳。</span>`;
     } else if (rounds <= 8) {
-      coachText = `\n\n<span style="color:var(--color-misplaced);">B级评价：稳扎稳打，步步为营。</span>`;
+      coachText = `\n\n<span style="color:var(--color-misplaced);">B 级：稳扎稳打，没出大错。</span>`;
     } else {
-      coachText = `\n\n<span style="color:var(--text-muted);">C级评价：惊险过关！好险好险。</span>`;
+      coachText = `\n\n<span style="color:var(--text-muted);">C 级：险过，但过了就是过了。</span>`;
     }
   } else if (win && GameState.mode === 'dual' && GameState.isChallenge) {
-    coachText = `\n\n<span style="color:var(--accent-primary);">干得漂亮！你成功破解了朋友留下的秘密。</span>`;
+    coachText = `\n\n<span style="color:var(--accent-primary);">朋友的密码让你破了。</span>`;
   }
 
   document.getElementById('overlayEmoji').textContent = win ? '\uD83C\uDF89' : '\uD83D\uDE35';
-  document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '挑战失败';
+  document.getElementById('overlayTitle').textContent = win ? '密码破解成功！' : '这次没能破解';
   document.getElementById('overlaySub').innerHTML = `${resultLabel}<br>${summaryText}${coachText}`;
   document.getElementById('overlayStats').textContent = '';
 

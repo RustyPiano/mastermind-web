@@ -13,7 +13,7 @@ describe('buildGuessStatusMessage', () => {
       challengeKey: null,
       isGuessComplete: false,
       isFirstGuidedGame: true,
-    })).toContain('先试着确定有哪些颜色存在。');
+    })).toContain('先试着确认哪些颜色存在。');
   });
 
   it('uses the daily practice prefix when practicing today’s puzzle', () => {
@@ -36,7 +36,7 @@ describe('buildRoundSummaryMessage', () => {
       misplacedCount: 2,
       maxGuesses: 10,
       isFirstGuidedGame: true,
-    })).toContain('先看 🟢 数量，再根据 🟠 调整位置。');
+    })).toContain('先数 🟢，再用 🟠 判断位置。');
   });
 
   it('adds a second hint after round two in a guided first game', () => {
@@ -46,7 +46,7 @@ describe('buildRoundSummaryMessage', () => {
       misplacedCount: 0,
       maxGuesses: 10,
       isFirstGuidedGame: true,
-    })).toContain('重复验证已确定的颜色');
+    })).toContain('送入已确定的颜色');
   });
 
   it('falls back to the compact summary outside the guided first game', () => {

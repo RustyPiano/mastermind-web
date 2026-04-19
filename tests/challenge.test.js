@@ -114,7 +114,7 @@ describe('buildChallengeIntroContent', () => {
             challengeTargetRounds: null,
         })).toMatchObject({
             title: '困难模式 好友挑战',
-            body: '朋友留下了一道密码，来破解吧。',
+        body: '朋友设了一道密码，看你能不能破。',
             actionLabel: '开始挑战',
         });
     });

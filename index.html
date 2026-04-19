@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="密码机（Mastermind）是一个免费的在线猜色解码游戏，支持每日挑战、单人闯关、重复色模式与双人对战。适合喜欢逻辑推理、解谜游戏和 Mastermind 桌游规则的玩家。">
+  <meta name="description" content="经典桌游 Mastermind 的网页版。用颜色和逻辑推理破解密码——每天一题，支持单人闯关、重复色挑战与双人对战。免费，无需登录。">
   <meta name="keywords" content="密码机,Mastermind,猜色游戏,GiiKER,计客,解谜游戏,逻辑推理">
   <meta name="author" content="RustyPiano">
   <meta name="theme-color" content="#121212">
@@ -14,8 +14,8 @@
   <link rel="canonical" href="https://mastermind.rustypiano.com/">
 
   <!-- Open Graph -->
-  <meta property="og:title" content="密码机 Mastermind - 在线猜色解码游戏">
-  <meta property="og:description" content="免费在线玩 Mastermind。支持每日挑战、单人闯关、重复色模式和双人对战。">
+  <meta property="og:title" content="密码机 Mastermind - 颜色推理解码游戏">
+  <meta property="og:description" content="用逻辑推理破解颜色密码。每天一题的每日挑战、四档难度单人闯关，还有双人出题对战。免费玩。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mastermind.rustypiano.com/">
   <meta property="og:site_name" content="密码机">
@@ -23,10 +23,10 @@
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="密码机 Mastermind - 在线猜色解码游戏">
-  <meta name="twitter:description" content="免费在线玩 Mastermind。支持每日挑战、单人闯关、重复色模式和双人对战。">
+  <meta name="twitter:title" content="密码机 Mastermind - 颜色推理解码游戏">
+  <meta name="twitter:description" content="用逻辑推理破解颜色密码。每天一题的每日挑战、四档难度单人闯关，还有双人出题对战。免费玩。">
 
-  <title>密码机 Mastermind - 在线猜色解码游戏 | 每日挑战、单人闯关、双人对战</title>
+  <title>密码机 Mastermind - 颜色推理解码游戏 | 每日挑战·单人闯关·双人对战</title>
 
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
@@ -38,7 +38,7 @@
       "name": "密码机",
       "alternateName": "Mastermind",
       "url": "https://mastermind.rustypiano.com/",
-      "description": "密码机（Mastermind）是一个免费的在线猜色解码游戏，支持每日挑战、单人闯关、重复色模式与双人对战。",
+      "description": "经典桌游 Mastermind 的网页版。用颜色和逻辑推理破解密码，支持每日挑战、单人闯关、重复色模式与双人对战。免费，无需登录。",
       "applicationCategory": "GameApplication",
       "operatingSystem": "Any",
       "browserRequirements": "Requires JavaScript and a modern browser",
@@ -76,7 +76,7 @@
 
   <header class="header">
     <h1 class="title">密码机</h1>
-    <p class="subtitle">MASTERMIND · 颜色解码挑战</p>
+    <p class="subtitle">MASTERMIND · 用逻辑破解颜色密码</p>
   </header>
 
   <main class="main-layout">
@@ -93,17 +93,17 @@
       <div class="screen active" id="screenMode">
         <div class="card text-center">
           <div class="card-title">选择模式</div>
-          <p class="text-hint">猜出颜色密码的推理游戏。想每天回来玩，从每日挑战开始。</p>
+          <p class="text-hint">在限定步数内破解颜色密码。每天都有新题，也可以自己选难度。</p>
           <div class="onboarding-card" id="onboardingCard" hidden>
             <div class="onboarding-card__head">
-              <strong>第一次玩先看这里</strong>
+              <strong>第一次玩，先看这里</strong>
               <button class="onboarding-card__close" id="btnDismissOnboarding" type="button"
                 aria-label="关闭新手说明">×</button>
             </div>
-            <p class="onboarding-card__copy">目标是在限定次数内猜中颜色组成的密码。单人闯关和每日挑战不允许重复色，重复色模式则允许。</p>
+            <p class="onboarding-card__copy">每轮选完颜色后，你会收到两种反馈点——据此缩小范围，在限定步数内猜出密码就算通关。单人和每日模式不允许重复色，重复色模式另说。</p>
             <div class="onboarding-card__legend">
-              <span>🟢 颜色和位置都正确</span>
-              <span>🟠 颜色正确但位置错误</span>
+              <span>🟢 颜色和位置都对</span>
+              <span>🟠 颜色在密码里，但位置不对</span>
             </div>
             <div class="btn-row onboarding-card__actions">
               <button class="btn btn-primary" id="btnStartStarter" type="button">先玩入门模式</button>
@@ -120,7 +120,7 @@
             <div class="mode-option mode-option--daily">
               <span class="mode-option__tag">今日目标</span>
               <button class="btn btn-primary" id="btnModeDaily" type="button">每日挑战</button>
-              <p class="mode-option__meta" id="dailyModeMeta">每天一题，通关会计入每日连胜。</p>
+              <p class="mode-option__meta" id="dailyModeMeta">每天一题，通关后累计连胜。</p>
               <div class="makeup-card-banner" id="makeupCardBanner" hidden>
                 <p class="makeup-card-banner__text" id="makeupCardText"></p>
                 <div class="makeup-card-banner__actions">
@@ -132,17 +132,17 @@
             <div class="mode-option mode-option--classic">
               <span class="mode-option__tag">难度闯关</span>
               <button class="btn btn-secondary" id="btnModeSingle" type="button">单人闯关</button>
-              <p class="mode-option__meta">从入门到专家，逐步增加颜色和槽位。</p>
+              <p class="mode-option__meta">四档难度，颜色数和槽位逐步增加。</p>
             </div>
             <div class="mode-option mode-option--variant">
               <span class="mode-option__tag">进阶变体</span>
               <button class="btn btn-secondary" id="btnModeDuplicates" type="button">重复色模式</button>
-              <p class="mode-option__meta">密码和猜测都允许重复色，推理难度更高。</p>
+              <p class="mode-option__meta">密码和猜测均可重复颜色，推理难度更大。</p>
             </div>
             <div class="mode-option mode-option--dual">
               <span class="mode-option__tag">双人对战</span>
               <button class="btn btn-secondary" id="btnModeDual" type="button">双人对战</button>
-              <p class="mode-option__meta">一人出题一人破解，适合当面轮流挑战。</p>
+              <p class="mode-option__meta">一人设密码，另一人来猜，面对面轮流玩。</p>
             </div>
           </div>
           <nav class="seo-links" aria-label="玩法说明与站点内容">
@@ -158,7 +158,7 @@
       <div class="screen" id="screenSingleModes">
         <div class="card text-center">
           <div class="card-title">单人闯关</div>
-          <p class="text-hint">从入门到专家，颜色数和槽位会逐步增加。</p>
+          <p class="text-hint">四档难度，从 6 色 4 槽到 8 色 5 槽。</p>
           <div class="mode-actions">
             <div class="mode-option">
               <span class="mode-option__tag">新手起步</span>
@@ -190,10 +190,10 @@
         <div class="card">
           <div class="card-title" id="setupTitle">玩家一 · 设置密码</div>
           <p class="text-hint">
-            从7色中选 <strong>4种不同颜色</strong>，顺序即密码
+            从调色盘选 <strong>不同颜色</strong>，顺序就是密码
           </p>
           <div class="secret-row" id="secretRow"></div>
-          <p class="text-small">点击已选颜色可移除</p>
+          <p class="text-small">点击已选的球可以移除</p>
           <div class="palette" id="setupPalette"></div>
         </div>
         <button class="btn btn-primary" id="btnConfirmSecret" type="button" disabled>确认密码 →</button>
@@ -206,8 +206,8 @@
           <div class="card-title">密码已锁定</div>
           <div class="lock-icon">🔒</div>
           <p class="lock-text">
-            请将设备交给<strong>玩家二</strong><br>
-            确保玩家一已离开屏幕后继续
+            把设备交给<strong>玩家二</strong><br>
+            玩家一离开屏幕后再继续
           </p>
         </div>
         <button class="btn btn-primary" id="btnStartGuessing" type="button">玩家二准备好了 →</button>
@@ -229,13 +229,13 @@
       <div class="screen" id="screenGuess">
         <div class="card">
           <div class="card-title" id="guessTitle">玩家二 · 猜测颜色</div>
-          <p class="text-small text-center guess-helper">点击槽位切换选色位置</p>
+          <p class="text-small text-center guess-helper">点击槽位可以切换选色位置</p>
           <div class="palette" id="guessPalette"></div>
 
         </div>
 
         <div class="status-row">
-          <div class="status-box" id="statusBox" aria-live="polite">选满颜色后提交</div>
+          <div class="status-box" id="statusBox" aria-live="polite">选满颜色再提交</div>
           <button class="help-link" id="btnOpenLegend" type="button" aria-expanded="false"
             aria-controls="legendSheet">反馈说明</button>
         </div>
@@ -265,8 +265,8 @@
               颜色不在密码中
             </div>
           </div>
-          <p class="text-small legend-sheet__copy">每轮结束后先看 🟢 数量，再根据 🟠 调整颜色位置。</p>
-          <p class="text-small legend-sheet__copy">规则会随模式变化：在限定次数内猜中所有槽位即可通关；单人闯关和每日挑战不允许重复色。</p>
+          <p class="text-small legend-sheet__copy">先数 🟢，再用 🟠 判断哪些颜色在密码里但位置不对。</p>
+          <p class="text-small legend-sheet__copy">单人闯关和每日挑战不允许重复色。在限定步数内猜中全部槽位即通关。</p>
         </div>
       </div>
 

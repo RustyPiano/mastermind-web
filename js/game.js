@@ -246,9 +246,9 @@ async function handleShareResult() {
       kind: 'result',
       variant: latestResult.variant,
     });
-    updateStatus(result.method === 'share' ? '分享成功' : '已复制结果，可直接粘贴分享');
+    updateStatus(result.method === 'share' ? '分享成功' : '已复制，可直接粘贴。');
   } catch {
-    updateStatus('当前浏览器不支持直接分享，请手动复制结果');
+    updateStatus('当前浏览器不支持直接分享，请手动复制结果。');
   }
 }
 
@@ -354,12 +354,12 @@ async function generateChallenge() {
         variant: GameState.variant,
         source: 'dual_setup',
       });
-      updateStatus('挑战链接已复制到剪贴板，快发给朋友吧！');
+      updateStatus('挑战链接已复制，发给朋友吧！');
     } else {
-      updateStatus('无法分享，请截图或手动告诉朋友');
+      updateStatus('无法分享，建议截图发给朋友。');
     }
   } catch (err) {
-    updateStatus('分享失败或被取消');
+    updateStatus('分享失败或已取消。');
   }
 }
 

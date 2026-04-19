@@ -54,7 +54,7 @@ export function buildChallengeShareText(url, variant) {
 
   return [
     `密码机 ${modeLabel} 好友挑战`,
-    '我设置了一个密码，来破解吧！',
+    '我设了一个密码，你能破解吗？',
     url,
   ].join('\n');
 }
@@ -64,7 +64,7 @@ export function buildChallengeInviteText(variant) {
 
   return [
     `密码机 ${modeLabel} 好友挑战`,
-    '我设置了一个密码，来破解吧！',
+    '我设了一个密码，你能破解吗？',
   ].join('\n');
 }
 
@@ -75,7 +75,7 @@ export function buildChallengeIntroContent({ variant, challengeTargetRounds = nu
     title: `${modeLabel} 好友挑战`,
     body: Number.isFinite(challengeTargetRounds)
       ? `朋友用了 ${challengeTargetRounds} 步。你能更少吗？`
-      : '朋友留下了一道密码，来破解吧。',
+      : '朋友设了一道密码，看你能不能破。',
     actionLabel: '开始挑战',
   };
 }

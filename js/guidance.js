@@ -21,7 +21,7 @@ export function buildGuessStatusMessage({
     return baseMessage;
   }
 
-  return `${baseMessage}${wrapStatusTip('先试着确定有哪些颜色存在。')}`;
+  return `${baseMessage}${wrapStatusTip('先试着确认哪些颜色存在。')}`;
 }
 
 export function buildRoundSummaryMessage({
@@ -39,11 +39,11 @@ export function buildRoundSummaryMessage({
   }
 
   if (roundNumber === 1) {
-    return `${baseMessage}${wrapStatusTip('先看 🟢 数量，再根据 🟠 调整位置。')}`;
+    return `${baseMessage}${wrapStatusTip('先数 🟢，再用 🟠 判断位置。')}`;
   }
 
   if (roundNumber === 2) {
-    return `${baseMessage}${wrapStatusTip('重复验证已确定的颜色，再缩小剩余位置。')}`;
+    return `${baseMessage}${wrapStatusTip('送入已确定的颜色，缩小剩下的位置范围。')}`;
   }
 
   return baseMessage;
